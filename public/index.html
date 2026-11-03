@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Secret Hitler</title>
+  <meta name="description" content="Secret Hitler — one shared board screen, everyone joins from their phones." />
+  <link rel="icon" href="assets/logo_transparent.png" />
+  <!-- The site root IS the game: land straight on the board lobby (fresh
+       game code + join QR), exactly like the LAN server's / → /board/ redirect.
+       Meta refresh is the fallback; the script below is instant. -->
+  <meta http-equiv="refresh" content="0; url=board/" />
+  <script>location.replace(new URL('board/', location.href).href);</script>
+</head>
+<body>
+  <p>Opening the game board… <a href="board/">continue</a></p>
+</body>
+</html>

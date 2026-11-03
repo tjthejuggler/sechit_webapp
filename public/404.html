@@ -4,16 +4,21 @@
   <meta charset="utf-8" />
   <title>Secret Hitler</title>
   <script>
-    // GitHub Pages serves this for any unknown path (e.g. a stale /board URL
-    // without the trailing slash). Send the visitor to the landing page,
-    // preserving any project sub-path.
+    // GitHub Pages serves this file for any unknown path — in particular for
+    // directory URLs WITHOUT the trailing slash (e.g. /repo/board), which
+    // would otherwise break the pages' relative asset links. Append the
+    // slash in place; anything else goes to the board (the game root).
     (() => {
-      const m = location.pathname.match(/^(.*\/)(board|play)\/?$/);
-      location.replace(m ? m[1] : '../');
+      const m = location.pathname.match(/^(.*\/)(board|play|join)$/);
+      if (m) {
+        location.replace(m[0] + '/' + location.search + location.hash);
+      } else {
+        location.replace(new URL('board/', location.href).href);
+      }
     })();
   </script>
 </head>
 <body>
-  <p>Redirecting… <a href="../">Secret Hitler</a></p>
+  <p>Redirecting… <a href="board/">Secret Hitler</a></p>
 </body>
 </html>

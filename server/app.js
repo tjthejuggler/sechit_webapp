@@ -58,6 +58,9 @@ app.get('/board', (_req, res) => res.redirect('/board/'));
 app.get('/board/', (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'board', 'index.html')));
 app.get('/play', (_req, res) => res.redirect('/play/'));
 app.get('/play/', (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'play', 'index.html')));
+// Join-by-code landing page (online mode's start/join screen; harmless here).
+app.get('/join', (_req, res) => res.redirect('/join/'));
+app.get('/join/', (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'join', 'index.html')));
 
 // LAN URL for QR generation (prefer non-internal IPv4).
 app.get('/api/lan-url', (_req, res) => {

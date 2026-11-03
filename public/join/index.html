@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Secret Hitler</title>
-  <meta name="description" content="Play Secret Hitler online: one shared board screen, everyone joins from their phones with a QR code or game link." />
-  <link rel="icon" href="assets/logo_transparent.png" />
-  <link rel="stylesheet" href="shared/theme.css" />
+  <meta name="description" content="Join a Secret Hitler game by code, or start your own." />
+  <link rel="icon" href="../assets/logo_transparent.png" />
+  <link rel="stylesheet" href="../shared/theme.css" />
   <style>
     /* Landing card — minimal, reuses the shared 1930s theme tokens. */
     body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg, #17130e); }
@@ -34,7 +34,7 @@
 <body>
   <main class="landing">
     <div class="lang-row" id="lang-toggle"></div>
-    <img class="logo" src="assets/logo_transparent.png" alt="Secret Hitler" />
+    <img class="logo" src="../assets/logo_transparent.png" alt="Secret Hitler" />
     <p class="tagline" data-i18n="app.tagline">A hidden-identity party game for 5–10 players — one shared screen, everyone else on their phones.</p>
     <button id="btn-new-game" class="big" data-i18n="app.start">Start a New Game</button>
     <h2 class="join-title" data-i18n="app.joinTitle">Joining a friend's game?</h2>
@@ -44,7 +44,7 @@
       <button id="btn-join" type="submit" data-i18n="app.joinBtn">Join Game</button>
     </form>
     <p id="join-error" class="hint hidden"></p>
-    <p class="hint">Starting a game shows a board screen with a fresh QR code + join link — keep that tab open while you play; it IS the game server.</p>
+    <p class="hint">Starting a game opens the board screen with a fresh QR code + join link — keep that tab open while you play; it IS the game server.</p>
     <footer class="credit">
       <span data-i18n-html="credit.line">Secret Hitler by Mike Boxleiter, Tommy Maranges, Mac Schubert — licensed CC BY-NC-SA 4.0 ·</span>
       <a href="https://www.secrethitler.com" target="_blank" rel="noopener">secrethitler.com</a>

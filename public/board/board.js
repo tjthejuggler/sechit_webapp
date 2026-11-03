@@ -11,7 +11,7 @@
 // EN|TR toggle re-renders the latest state live and swaps localizable board
 // art to the Turkish variants (identical display geometry — see BOARD_GEO).
 import { showToast, setQrImg } from '../shared/shared.js';
-import { detectMode, MODE, connectBoardLan, deadSocket } from '../shared/net.js';
+import { detectMode, MODE, connectBoardLan, deadSocket, generateGameCode } from '../shared/net.js';
 import { startHost } from './host.js';
 import {
   t, getLang, setLang, onChange, applyI18n, createLangToggle,
@@ -140,8 +140,11 @@ applyI18n();
 
 // ------------------------------------------------------ share / copy controls
 // Online mode affordances under the lobby QR: the short game code, a copy
-// button for the full join URL and a native share sheet where available.
-// Hidden entirely in LAN mode (the QR + URL are enough there).
+// button for the full join URL, a native share sheet where available, and a
+// "New code" button that abandons the current lobby and re-mints a fresh
+// game code + QR (regenerating the QR is an explicit user action — see
+// board.lobby.newCodeConfirm). Hidden entirely in LAN mode (the QR + URL are
+// enough there, and the server owns the game id).
 if (hostInfo) {
   $('#btn-copy-link')?.addEventListener('click', async () => {
     const url = $('#join-url')?.dataset.copyText ?? $('#join-url')?.textContent ?? '';
@@ -170,6 +173,15 @@ if (hostInfo) {
         showToast(t('board.lobby.copyFailed'), { error: true });
       }
     }
+  });
+  // "New code": abandon the current lobby + code and re-mint a fresh game
+  // code + QR via a clean navigation to board/?host=<fresh code>.
+  $('#btn-new-code')?.addEventListener('click', () => {
+    if (!confirm(t('board.lobby.newCodeConfirm'))) return;
+    try { hostInfo?.peer?.destroy(); } catch { /* already gone */ }
+    const url = new URL('../board/', document.baseURI);
+    url.searchParams.set('host', generateGameCode());
+    location.replace(url.href);
   });
 } else {
   $('#join-code')?.closest('.join-code-card')?.classList.add('hidden');

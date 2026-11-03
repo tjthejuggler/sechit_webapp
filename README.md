@@ -43,9 +43,12 @@ npm start             # serves on PORT 3000 by default
 
 The same app also runs as a **fully static site** with no backend at all:
 
-- **Landing page (`/`)** — "Start a New Game" mints a random 6-char game code
-  (Crockford-style base32, no confusing chars) and opens `board/?host=<code>`;
-  a join-by-code form routes to `play/?g=<code>`.
+- **The site root IS the game (`/`)** — exactly like the LAN server, `/`
+  opens the board lobby straight away with a fresh 6-char game code
+  (Crockford-style base32, no confusing chars) and its join QR. A
+  **New code** button under the QR re-mints the code + QR on demand.
+  `join/` holds the optional start/join landing page (join by code →
+  `play/?g=<code>`).
 - **Browser-host architecture** — the board page imports the same isomorphic
   engine (`server/engine/*`, `server/session.js`, `server/room.js`) directly,
   instantiates `GameSession` + `GameRoom` locally, and acts as the
@@ -73,10 +76,15 @@ The same app also runs as a **fully static site** with no backend at all:
 
 Deployment (GitHub Pages project page):
 
-1. Push to `main`; `.github/workflows/deploy.yml` runs `npm ci` +
+1. **Settings → Pages → Build and deployment → Source: “GitHub Actions”** —
+   do this FIRST. If Pages is left on “Deploy from a branch”, the raw repo is
+   served instead and Jekyll renders this README as the homepage (the exact
+   symptom: visiting the site shows documentation text instead of the game).
+2. Push to `main`; `.github/workflows/deploy.yml` runs `npm ci` +
    `npm run build:vendor`, assembles a `site/` artifact (`public/` +
    `server/` engine sources + `.nojekyll`), and publishes it.
-2. Enable **Pages, via GitHub Actions** in the repo settings once.
+3. Open the Pages URL — it lands directly on the board lobby with a fresh
+   game code and join QR.
 
 `npm run build:vendor` (`scripts/build-vendor.mjs`) copies `peerjs.min.js`
 and `jsQR.js` from `node_modules` and bundles the CommonJS `qrcode` browser
