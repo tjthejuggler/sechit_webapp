@@ -27,7 +27,10 @@ export function setPage(tab) {
     btn.classList.toggle('active', btn.dataset.tab === tab);
   });
   document.querySelectorAll('.page').forEach((p) => p.classList.add('hidden'));
-  const target = tab === 'board' ? '#page-board' : tab === 'history' ? '#page-history' : '#page-action';
+  const target = tab === 'board' ? '#page-board'
+    : tab === 'history' ? '#page-history'
+    : tab === 'secret' ? '#page-secret'
+    : '#page-action';
   $(target).classList.remove('hidden');
 }
 

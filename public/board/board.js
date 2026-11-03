@@ -147,19 +147,101 @@ function renderLobby(state) {
   $('#lobby-count').textContent = t('board.lobby.count', {
     n: count, s: count === 1 ? '' : 's', min: state.minPlayers, max: state.maxPlayers,
   });
-  $('#lobby-players').replaceChildren(
-    ...state.lobby.map((p) => {
-      const chip = document.createElement('div');
-      chip.className = 'lobby-chip';
-      chip.textContent = p.name;
-      return chip;
-    }),
-  );
+  renderLobbyRing(state);
   $('#btn-start').disabled = !canStart;
   $('#btn-start').textContent = canStart
     ? t('board.btn.start')
     : t('board.btn.waiting', { n: state.minPlayers });
   $('#btn-begin').classList.add('hidden');
+}
+
+// Pre-game seating circle: seats mirror the in-game ring geometry. Drag a
+// player onto another seat (HTML5 DnD) — or tap one, then tap another — to
+// SWAP them. The full new id order goes to the server (`board:reorder`),
+// which is authoritative for the lobby (and thus seat) order.
+let pendingLobbyPick = null;
+
+function renderLobbyRing(state) {
+  const ring = $('#lobby-ring');
+  for (const old of ring.querySelectorAll('.lobby-seat')) old.remove();
+  $('#lobby-rearrange-hint').textContent = state.lobby.length >= 2
+    ? t('board.lobby.rearrange')
+    : '';
+
+  const players = state.lobby;
+  const n = Math.max(players.length, 1);
+  players.forEach((p, i) => {
+    const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+    const radiusX = ring.clientWidth * 0.5 - 56;
+    const radiusY = ring.clientHeight * 0.5 - 28;
+    const x = ring.clientWidth / 2 + radiusX * Math.cos(angle);
+    const y = ring.clientHeight / 2 + radiusY * Math.sin(angle);
+
+    const seat = document.createElement('div');
+    seat.className = 'lobby-seat';
+    seat.style.left = `${x}px`;
+    seat.style.top = `${y}px`;
+    seat.dataset.playerId = p.id;
+    seat.draggable = true;
+
+    const name = document.createElement('span');
+    name.className = 'seat-name';
+    name.textContent = p.name;
+    seat.appendChild(name);
+
+    seat.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', p.id);
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    seat.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      seat.classList.add('drop-target');
+    });
+    seat.addEventListener('dragleave', () => seat.classList.remove('drop-target'));
+    seat.addEventListener('drop', (e) => {
+      e.preventDefault();
+      seat.classList.remove('drop-target');
+      clearLobbySelection();
+      const from = e.dataTransfer.getData('text/plain');
+      if (from && from !== p.id) swapLobbySeats(state, from, p.id);
+    });
+    // Tap-tap fallback for touch screens without drag support.
+    seat.addEventListener('click', () => {
+      if (pendingLobbyPick == null) {
+        pendingLobbyPick = p.id;
+        seat.classList.add('selected');
+        return;
+      }
+      const from = pendingLobbyPick;
+      clearLobbySelection();
+      if (from !== p.id) swapLobbySeats(state, from, p.id);
+    });
+
+    ring.appendChild(seat);
+  });
+}
+
+function clearLobbySelection() {
+  pendingLobbyPick = null;
+  document.querySelectorAll('.lobby-seat.selected').forEach((el) => el.classList.remove('selected'));
+}
+
+// Swap two players in the lobby order and push the full order to the server.
+// Optimistic local swap keeps the ring responsive; the server broadcast
+// confirms (or reverts on failure).
+function swapLobbySeats(state, fromId, toId) {
+  const ids = state.lobby.map((p) => p.id);
+  const i = ids.indexOf(fromId);
+  const j = ids.indexOf(toId);
+  if (i < 0 || j < 0) return;
+  [ids[i], ids[j]] = [ids[j], ids[i]];
+  // Optimistic local re-render (server broadcast will follow anyway).
+  const byId = new Map(state.lobby.map((p) => [p.id, p]));
+  state.lobby = ids.map((id) => byId.get(id));
+  renderLobbyRing(state);
+  socket.timeout(8000).emit('board:reorder', ids, (err, res) => {
+    if (err || !res?.ok) showToast(errorText(res?.code, t('board.toast.reorderFailed')), { error: true });
+  });
 }
 
 // ---------------------------------------------------------------- game views

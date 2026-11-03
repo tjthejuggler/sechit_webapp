@@ -63,6 +63,7 @@ let dismissedInvestigationSig = null; // investigation result already dismissed 
 let renderSeq = 0;      // monotonic render counter (staleness guard)
 let pendingUrlAction = null; // { kind: 'draw' } from ?d= (board deck QR)
 let shownExecuteTarget = null; // execution confirm dedup
+let lastPhaseSeen = null;     // tab-focus transitions (ROLE_REVEAL ⇄ game)
 
 // ------------------------------------------------------------------ socket
 
@@ -106,7 +107,6 @@ socket.on('connect', () => {
 
 // Language switch: re-render the current screen live + refresh static chrome.
 onChange(() => {
-  $('#btn-my-role').textContent = t('play.hold.role');
   applyI18n();
   if (you) render(you);
 });
@@ -166,7 +166,6 @@ function firePendingUrlAction(state) {
 // ------------------------------------------------------------------ boot
 
 $('#lang-toggle-play').replaceChildren(createLangToggle());
-$('#btn-my-role').dataset.i18n = 'play.hold.role';
 $('#join-name').dataset.i18nPlaceholder = 'play.join.placeholder';
 $('#btn-join').dataset.i18n = 'play.join.button';
 $('#join-status').dataset.i18n = 'play.join.status';
@@ -190,6 +189,15 @@ function render(state) {
   const seq = ++renderSeq;
   renderPhaseChip(state);
 
+  // Tab focus on phase transitions: entering ROLE_REVEAL everyone lands on
+  // the shh Secrets tab (that's where they learn their role/team); when the
+  // board begins the first nomination, everyone is pulled back to Action.
+  if (state.phase !== lastPhaseSeen) {
+    if (state.phase === 'ROLE_REVEAL') setPage('secret');
+    else if (lastPhaseSeen === 'ROLE_REVEAL' && state.phase === 'NOMINATION') setPage('action');
+    lastPhaseSeen = state.phase;
+  }
+
   if (state.phase === 'LOBBY') {
     setTabBarVisible(false);
     renderLobby();
@@ -201,6 +209,7 @@ function render(state) {
   renderTabs(state, you);
   renderBoardPage(state);
   renderHistoryPage(state);
+  if (you) renderSecretPage(state);
   snapToActionWhenNeeded(state);
 
   if (state.phase === 'GAME_OVER') {
@@ -336,85 +345,70 @@ $('#join-form').addEventListener('submit', async (e) => {
   }
 });
 
-// ------------------------------------------------- hold-to-reveal role cards
+// ------------------------------------------------- hold-to-reveal secret cards
 
-// Build a card whose back shows the official art. Reveal ONLY while held
-// (pointerdown → reveal; pointerup/leave/cancel → hide). The FRONT (pre-hold
-// state) is generic: no seal, no team colour — nothing leaks the role.
-function makeHoldCard(cardEl, backEl, html) {
-  backEl.replaceChildren();
-  backEl.innerHTML = html;
-  const reveal = () => cardEl.classList.add('revealed');
-  const hide = () => cardEl.classList.remove('revealed');
+// The shh (Secrets) tab is the ONLY place where role / party membership /
+// teammates are ever shown. Even there, everything is hold-to-reveal: the
+// card BACKS are injected at pointerdown and wiped on release, so nothing
+// about the secrets is ever in the DOM (or visible) while at rest.
+function makeSecretCard(cardEl, backEl, htmlProvider) {
+  const reveal = () => {
+    backEl.innerHTML = htmlProvider() ?? ''; // inject only while held
+    cardEl.classList.add('revealed');
+  };
+  const hide = () => {
+    cardEl.classList.remove('revealed');
+    backEl.replaceChildren(); // wipe the secret the moment it is released
+  };
   cardEl.onpointerdown = (e) => { e.preventDefault(); reveal(); };
   cardEl.onpointerup = hide;
   cardEl.onpointerleave = hide;
   cardEl.onpointercancel = hide;
-  // Context-menu / long-press suppression on mobile.
-  cardEl.oncontextmenu = (e) => e.preventDefault();
+  cardEl.oncontextmenu = (e) => e.preventDefault(); // no long-press menu
 }
 
-// The persistent "My Role" hold-button works in EVERY phase (and for the
-// dead), so players can privately re-check their secret role all game.
-// The overlay starts EMPTY: art is injected only at pointerdown, so nothing
-// about role/team is ever in the DOM (or visible) before the press.
-// Wipe art and hide; registered at the WINDOW level so the release is caught
-// no matter which element the pointer ends up over once the overlay opens.
-function hideMyRole() {
-  $('#my-role-art').removeAttribute('src'); // wipe art on release
-  $('#my-role-party-art').removeAttribute('src');
-  $('#my-role-overlay').classList.add('hidden');
-}
-$('#btn-my-role').addEventListener('pointerdown', (e) => {
-  e.preventDefault();
-  if (!you) return;
+// Renders the three secret cards for the CURRENT private view. Re-run on
+// every state broadcast so the backs (when held) are always up to date.
+function renderSecretPage(state) {
   const role = you.you.role;
   const party = role === 'hitler' ? 'fascist' : role;
-  $('#my-role-art').src = ROLE_ART[role] ?? '';
-  $('#my-role-art').alt = `${roleTitle(role)} ${t('play.role.altSuffix')}`;
-  $('#my-role-party-art').src = PARTY_ART[party] ?? '';
-  $('#my-role-party-art').alt = t('play.role.partyCardAlt', { party: partyTitle(party) });
-  $('#my-role-overlay').classList.remove('hidden');
-});
-['pointerup', 'pointercancel'].forEach((ev) => {
-  window.addEventListener(ev, hideMyRole, true); // capture: fires first, any target
-});
-// Long-press suppression on BOTH button and overlay — without this, mobile
-// browsers fire contextmenu/pointercancel on the held button and the reveal
-// dies instantly (the big role-reveal cards suppress it via makeHoldCard).
-$('#btn-my-role').oncontextmenu = (e) => e.preventDefault();
-$('#my-role-overlay').oncontextmenu = (e) => e.preventDefault();
+  // Role/party classes style the card BACKS (visible only while held).
+  $('#secret-role-card').className = `tap-card secret-card role-${role}`;
+  $('#secret-party-card').className = `tap-card secret-card party-${party}`;
+  $('#secret-team-card').className = 'tap-card secret-card';
+  makeSecretCard($('#secret-role-card'), $('#secret-role-back'), () => `
+    <img class="card-art" src="${ROLE_ART[role]}" alt="${roleTitle(role)} ${t('play.role.altSuffix')}" draggable="false" />
+    <div class="role-desc">${roleDesc(role)}</div>`);
+  makeSecretCard($('#secret-party-card'), $('#secret-party-back'), () => `
+    <img class="card-art slim" src="${PARTY_ART[party]}" alt="${t('play.role.partyCardAlt', { party: partyTitle(party) })}" draggable="false" />`);
+  makeSecretCard($('#secret-team-card'), $('#secret-team-back'), () => {
+    const html = teammatesHtml(you, state);
+    return html || t('play.secret.noTeam');
+  });
+}
 
 // ------------------------------------------------------------------- role
 
+// The ROLE_REVEAL screen shows no secrets any more — it just points the
+// player at the shh Secrets tab (the single place secrets can be revealed).
 function renderRoleReveal(state) {
   show('#screen-role');
   $('#me-label').textContent = myName ?? you.you.id;
-  const roleCard = $('#role-card');
-  const partyCard = $('#party-card');
+  $('#role-hint').textContent = t('play.role.hint');
+}
 
-  // Front faces stay generic regardless of role (no team class on the shell —
-  // only the hidden back face may carry team styling).
-  roleCard.className = 'tap-card';
-  partyCard.className = 'tap-card';
-
-  makeHoldCard(roleCard, $('#role-card-back'), `
-    <img class="card-art" src="${ROLE_ART[you.you.role]}" alt="${roleTitle(you.you.role)} ${t('play.role.altSuffix')}" draggable="false" />
-    <div class="role-desc">${roleDesc(you.you.role)}</div>`);
-
-  const party = you.you.role === 'hitler' ? 'fascist' : you.you.role;
-  makeHoldCard(partyCard, $('#party-card-back'), `
-    <img class="card-art slim" src="${PARTY_ART[party]}" alt="${t('play.role.partyCardAlt', { party: partyTitle(party) })}" draggable="false" />`);
-
-  const tm = you.teammates ?? { fascists: [], hitlerId: null };
-  const box = $('#teammates-box');
+// Team knowledge as small HTML lines — rendered ONLY inside hold-to-reveal
+// surfaces (role card back + "My Role" overlay), never at rest.
+function teammatesHtml(you, state) {
+  const tm = you?.teammates ?? { fascists: [], hitlerId: null };
+  const role = you?.you?.role;
   const lines = [];
-  if (you.you.role === 'fascist') {
-    lines.push(t('play.role.teammates.hitler', { name: esc(nameOf(state, tm.hitlerId)) }));
+  if (role === 'fascist') {
+    if (tm.hitlerId) lines.push(t('play.role.teammates.hitler', { name: esc(nameOf(state, tm.hitlerId)) }));
     for (const f of tm.fascists) {
       if (f !== you.you.id) lines.push(t('play.role.teammates.fellowFascist', { name: esc(nameOf(state, f)) }));
     }
-  } else if (you.you.role === 'hitler') {
+  } else if (role === 'hitler') {
     if (tm.fascists.length) {
       lines.push(t('play.role.teammates.yourFascists', {
         names: tm.fascists.map((f) => esc(nameOf(state, f))).join(', '),
@@ -423,10 +417,7 @@ function renderRoleReveal(state) {
       lines.push(t('play.role.teammates.alone'));
     }
   }
-  box.innerHTML = lines.join('<br />');
-  box.classList.toggle('hidden', lines.length === 0);
-
-  $('#role-hint').textContent = t('play.role.hint');
+  return lines.join('<br />');
 }
 
 function partyTitle(party) {

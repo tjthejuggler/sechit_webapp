@@ -273,27 +273,57 @@ body {
 .tap-card.revealed .tap-card-front { transform: rotateY(180deg); }
 .tap-card.revealed .tap-card-back { transform: rotateY(0deg); }
 
-#role-card.role-liberal .tap-card-back {
+.tap-card.role-liberal .tap-card-back {
   background: linear-gradient(170deg, #3d6288, var(--liberal-blue) 60%, #16283c);
   color: var(--paper);
 }
-#role-card.role-fascist .tap-card-back,
-#role-card.role-hitler .tap-card-back {
+.tap-card.role-fascist .tap-card-back,
+.tap-card.role-hitler .tap-card-back {
   background: linear-gradient(170deg, #7c1f2c, var(--oxblood-deep) 60%, #2a0508);
   color: var(--paper);
 }
 
-#party-card.party-liberal .tap-card-back {
+.tap-card.party-liberal .tap-card-back {
   background: linear-gradient(170deg, #3d6288, var(--liberal-blue));
   color: var(--paper);
 }
-#party-card.party-fascist .tap-card-back {
+.tap-card.party-fascist .tap-card-back {
   background: linear-gradient(170deg, #7c1f2c, var(--oxblood-deep));
   color: var(--paper);
 }
 
 .tap-card-back .role-name { font-size: 1.6rem; }
 .tap-card-back .role-desc { font-family: var(--font-body); text-transform: none; letter-spacing: 0; font-size: 0.78rem; margin-top: 0.5rem; color: rgba(244, 234, 210, 0.85); }
+
+/* ---- shh Secrets tab ------------------------------------------------- */
+
+.display-shh {
+  font-size: 4rem;
+  margin: 1rem 0;
+  text-align: center;
+}
+
+#secret-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-top: 1rem;
+}
+
+.secret-card { min-height: 170px; }
+
+#secret-team-card .tap-card-back {
+  background: linear-gradient(170deg, #26221c, #14110d);
+  color: var(--paper);
+  font-family: var(--font-body);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  justify-content: center;
+}
+
+.role-desc.teammates:empty { display: none; }
 
 #teammates-box {
   background: rgba(0, 0, 0, 0.35);

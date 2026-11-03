@@ -103,6 +103,12 @@ board.on('connection', (socket) => {
     const cb = typeof payload === 'function' ? payload : typeof ack === 'function' ? ack : noop;
     guarded(cb, () => session.beginNomination());
   });
+  // Pre-game seating arrangement: the board page sends the full player-id
+  // order after a drag-and-drop (or tap-tap) swap in the lobby ring.
+  socket.on('board:reorder', (orderedIds, ack = noop) => {
+    const cb = typeof ack === 'function' ? ack : noop;
+    guarded(cb, () => session.reorderLobby(orderedIds));
+  });
   socket.on('board:president', (targetId, ack = noop) => {
     const cb = typeof ack === 'function' ? ack : noop;
     guarded(cb, () => session.setPresident(targetId));

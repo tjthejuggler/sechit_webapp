@@ -101,6 +101,24 @@ export class GameSession {
 
   // Reattach a phone via its localStorage/session URL token. Returns the
   // session record or null (token unknown — e.g. after a reset).
+  // Board-side pre-game seating arrangement: drag-and-drop reorder of the
+  // lobby. The lobby array order IS the seat order used by startGame(), so a
+  // reorder here directly changes the seating circle. Only valid pre-game.
+  reorderLobby(orderedIds) {
+    if (this.engine) this.#fail('GAME_IN_PROGRESS', 'A game is already running.');
+    const ids = (Array.isArray(orderedIds) ? orderedIds : []).map(String);
+    const current = new Set(this.lobby.map((p) => p.id));
+    if (ids.length !== current.size
+      || new Set(ids).size !== ids.length
+      || ids.some((id) => !current.has(id))) {
+      this.#fail('BAD_ORDER', 'Order must list every seated player exactly once.');
+    }
+    const byId = new Map(this.lobby.map((p) => [p.id, p]));
+    this.lobby = ids.map((id) => byId.get(id));
+    this.#changed();
+    return this.lobby.map((p) => p.id);
+  }
+
   reattach(token) {
     return this.sessions.get(String(token ?? '')) ?? null;
   }

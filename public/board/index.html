@@ -37,7 +37,12 @@
         <div id="join-url"></div>
       </div>
       <div id="lobby-count">0 players — need 5 to 10</div>
-      <div id="lobby-players"></div>
+      <!-- Pre-game seating circle: drag a player onto another seat (or tap
+           one, then tap another) to swap them before starting the game. -->
+      <div id="lobby-ring-wrap">
+        <div id="lobby-ring"></div>
+      </div>
+      <p id="lobby-rearrange-hint" class="muted small"></p>
     </section>
 
     <!-- ================================================================ TABLE -->

@@ -14,7 +14,6 @@
     <header id="top-bar">
       <div id="me-label"></div>
       <div class="top-actions">
-        <button id="btn-my-role" class="chip-btn hold-btn" type="button">Hold: My Role</button>
         <div id="lang-toggle-play"></div>
       </div>
       <div id="phase-chip"></div>
@@ -49,26 +48,14 @@
     </section>
 
     <!-- ============================================================ ROLE -->
-    <!-- Card fronts are COMPLETELY neutral (no seal, no team colour, no
-         party imagery). Only the hold-revealed back face carries the art. -->
+    <!-- No secrets on this screen any more: it only points players at the
+         shh-tab, the single place where role/party/teammates can be
+         revealed (hold-to-reveal there). -->
     <section id="screen-role" class="screen hidden">
       <h2 class="screen-title" data-i18n="play.role.title">Your Secret Role</h2>
-      <div id="role-card" class="tap-card">
-        <div class="tap-card-front">
-          <span data-i18n="play.role.topSecret">Top Secret</span>
-          <div class="small" data-i18n="play.role.holdToReveal">Hold to reveal</div>
-        </div>
-        <div class="tap-card-back" id="role-card-back"></div>
-      </div>
-      <div id="party-card" class="tap-card">
-        <div class="tap-card-front">
-          <span data-i18n="play.role.partyMembership">Party Membership</span>
-          <div class="small" data-i18n="play.role.holdToReveal">Hold to reveal</div>
-        </div>
-        <div class="tap-card-back" id="party-card-back"></div>
-      </div>
-      <div id="teammates-box" class="hidden"></div>
-      <p class="muted center" id="role-hint"></p>
+      <p class="display-shh">&#129323;</p>
+      <p class="muted center" data-i18n="play.role.checkTab">Open the shh Secrets tab at the bottom to look at your cards.</p>
+      <p class="muted center small" id="role-hint"></p>
     </section>
 
     <!-- ====================================================== NOMINATION -->
@@ -245,6 +232,38 @@
       </div>
     </section>
 
+    <!-- ================================================ SECRETS (shh tab) -->
+    <!-- The ONLY place secrets ever appear. Card fronts are completely
+         neutral; backs are injected at pointerdown and wiped on release,
+         so nothing about role/party/team is ever in the DOM at rest. -->
+    <section id="page-secret" class="page screen hidden">
+      <h2 class="screen-title" data-i18n="play.secret.title">Your Secrets</h2>
+      <p class="muted small center" data-i18n="play.secret.sub">Hold a card to reveal it — it hides the moment you let go.</p>
+      <div id="secret-cards">
+        <div id="secret-role-card" class="tap-card secret-card">
+          <div class="tap-card-front">
+            <span data-i18n="play.role.topSecret">Top Secret</span>
+            <div class="small" data-i18n="play.role.holdToReveal">Hold to reveal</div>
+          </div>
+          <div class="tap-card-back" id="secret-role-back"></div>
+        </div>
+        <div id="secret-party-card" class="tap-card secret-card">
+          <div class="tap-card-front">
+            <span data-i18n="play.role.partyMembership">Party Membership</span>
+            <div class="small" data-i18n="play.role.holdToReveal">Hold to reveal</div>
+          </div>
+          <div class="tap-card-back" id="secret-party-back"></div>
+        </div>
+        <div id="secret-team-card" class="tap-card secret-card">
+          <div class="tap-card-front">
+            <span data-i18n="play.secret.teamFront">Your Team</span>
+            <div class="small" data-i18n="play.role.holdToReveal">Hold to reveal</div>
+          </div>
+          <div class="tap-card-back" id="secret-team-back"></div>
+        </div>
+      </div>
+    </section>
+
     <!-- ================================================ HISTORY (tab 3) -->
     <section id="page-history" class="page screen hidden">
       <h2 class="screen-title" data-i18n="play.page.history.title">History</h2>
@@ -270,25 +289,11 @@
       <span class="tab-icon">&#128220;</span>
       <span class="tab-label" data-i18n="play.tab.history">History</span>
     </button>
+    <button id="tab-secret" type="button" data-tab="secret">
+      <span class="tab-icon">&#129323;</span>
+      <span class="tab-label" data-i18n="play.tab.secret">Secrets</span>
+    </button>
   </nav>
-
-  <!-- Hold-to-reveal overlay: EMPTY until pressed — art is injected only at
-       pointerdown and wiped on release, so nothing about role/team is ever
-       in the DOM (or visible) before the hold. Shows BOTH party membership
-       and role, small, any time the top-bar button is held. -->
-  <div id="my-role-overlay" class="hidden">
-    <div id="my-role-cards">
-      <div class="my-role-mini">
-        <img id="my-role-party-art" alt="Your party membership" draggable="false" />
-        <p class="muted small center" data-i18n="play.role.partyMembership">Party Membership</p>
-      </div>
-      <div class="my-role-mini">
-        <img id="my-role-art" alt="Your role card" draggable="false" />
-        <p class="muted small center" data-i18n="play.role.title">Your Secret Role</p>
-      </div>
-    </div>
-    <p class="muted small center" data-i18n="play.overlay.release">Release to hide</p>
-  </div>
 
   <footer class="credit">
     <span data-i18n-html="credit.line">Secret Hitler by Mike Boxleiter, Tommy Maranges, Mac Schubert —
