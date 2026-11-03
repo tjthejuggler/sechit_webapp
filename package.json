@@ -1,0 +1,26 @@
+{
+  "name": "sechit-webapp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Secret Hitler web app: central board + phone clients over LAN (see plans/secret-hitler-plan.md)",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server/app.js",
+    "test": "npm run test:unit && npm run test:bots",
+    "test:unit": "node --test tests/*.test.js",
+    "test:bots": "node --test tests/bots/*.test.js",
+    "test:full": "BOT_GAMES_PER_COUNT=10 npm run test:bots"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "jsqr": "^1.4.0",
+    "qrcode": "^1.5.4",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.4"
+  }
+}

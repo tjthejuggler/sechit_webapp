@@ -1,0 +1,549 @@
+/* Board page — big-screen layout built around the official print-and-play
+   art (public/assets, see manifest.json). 1930s aesthetic from shared/theme. */
+@import url('../shared/theme.css');
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+#app {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding: 1rem 1.4rem 0;
+  max-width: 1900px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ------------------------------------------------------------- phase banner */
+
+#phase-banner {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  border-bottom: 2px solid var(--brass-dim);
+  padding-bottom: 0.5rem;
+}
+
+#header-logo { height: 64px; width: auto; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6)); }
+#phase-heading { flex: 1; }
+#phase-banner h1 { margin: 0; font-size: 2rem; }
+#phase-sub { color: var(--paper-dim); font-size: 1.05rem; }
+
+.board-controls { display: flex; gap: 0.6rem; }
+
+/* --------------------------------------------------- official board strip */
+
+#boards {
+  display: grid;
+  /* Exact art proportions: liberal 4266px, fascist track 2133px, summary 2139px.
+     Zero gap: the halves must butt seamlessly (no visible seam/margin). */
+  grid-template-columns: 4266fr 2133fr 2139fr;
+  gap: 0;
+  align-items: stretch;
+}
+
+.board-wrap {
+  position: relative;
+  overflow: hidden;
+  background: #f4ead2;
+}
+
+/* Match each printed sheet's aspect ratio so the percentage-positioned
+   overlays (tiles / tracker / piles) sit exactly on the art. */
+#liberal-wrap { aspect-ratio: 4266 / 1515; }
+#fasc-track-wrap { aspect-ratio: 2133 / 1499; }
+#fasc-sum-wrap { aspect-ratio: 2139 / 1499; }
+
+.board-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+}
+
+/* -------- policy tiles (no art exists — clean CSS tiles per the aesthetic) */
+
+.policy-tile {
+  position: absolute;
+  border-radius: 6px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45);
+  animation: tile-in 0.3s ease;
+  z-index: 2;
+}
+
+.policy-tile.liberal {
+  background: linear-gradient(170deg, #4a76a4 0%, #3d6288 35%, #2c4a6e 100%);
+  border: 2px solid #dfe9f2;
+}
+
+.policy-tile.fascist {
+  background: linear-gradient(170deg, #a32c3a 0%, #7c1f2c 40%, #5a121d 100%);
+  border: 2px solid #f2e3d5;
+}
+
+@keyframes tile-in {
+  from { transform: scale(0.4); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* ------------------------------------------------------------ piles + draw QR */
+
+.pile-overlay {
+  position: absolute;
+  margin: 0;
+  z-index: 3;
+}
+
+.pile-overlay img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+}
+
+.pile-overlay.draw { left: 1.4%; top: 11%; width: 11.6%; height: 80%; }
+.pile-overlay.discard { right: 1.4%; top: 11%; width: 11.6%; height: 80%; }
+
+.pile-count {
+  position: absolute;
+  z-index: 4;
+  right: -6px;
+  top: -6px;
+  background: var(--brass);
+  color: var(--ink);
+  border-radius: 999px;
+  min-width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-family: var(--font-display);
+  box-shadow: var(--shadow);
+}
+
+#draw-pile .qr-holder {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 8, 9, 0.93);
+  border-radius: 10px;
+  border: 2px solid var(--brass);
+  padding: 0.3rem;
+}
+
+#draw-pile .qr-holder img {
+  background: #fff;
+  border-radius: 6px;
+  padding: 3px;
+  max-width: 100%;
+  height: auto;
+}
+
+#draw-pile .qr-holder .qr-caption {
+  color: var(--paper);
+  font-size: 0.62rem;
+  margin-top: 0.25rem;
+  text-align: center;
+}
+
+/* ------------------------------------------------------- election tracker */
+
+#tracker-overlay { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+
+.tracker-mark {
+  position: absolute;
+  width: 3.4%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  border: 2px solid rgba(44, 74, 110, 0.65);
+  background: transparent;
+}
+
+.tracker-mark.filled {
+  background: radial-gradient(circle at 35% 30%, #e0b33a, var(--brass-dim));
+  border-color: var(--brass);
+  animation: tracker-pop 0.25s ease;
+}
+
+@keyframes tracker-pop {
+  from { transform: translate(-50%, -50%) scale(0.4); }
+  to { transform: translate(-50%, -50%) scale(1); }
+}
+
+.reshuffle-flash {
+  position: fixed;
+  z-index: 50;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-4deg);
+  background: var(--brass);
+  color: var(--ink);
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: 2rem;
+  padding: 0.6em 1.2em;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  animation: reshuffle-pop 2.8s ease forwards;
+}
+
+/* Persistent banner while the investigation announcement waits for
+   acknowledgements from every living player. */
+.announce-banner {
+  position: fixed;
+  z-index: 50;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--brass);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  padding: 0.5em 1.2em;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  text-align: center;
+  max-width: 90vw;
+}
+.announce-banner .small {
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+}
+
+@keyframes reshuffle-pop {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(-4deg) scale(0.6); }
+  10% { opacity: 1; transform: translate(-50%, -50%) rotate(-4deg) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(-4deg) scale(1.05); }
+}
+
+/* ------------------------------------------------------------------- layout */
+
+#layout {
+  display: grid;
+  grid-template-columns: 2.2fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  #boards { grid-template-columns: 1fr; }
+  #layout { grid-template-columns: 1fr; }
+}
+
+/* ------------------------------------------------------------ seating ring */
+
+#table-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 480px;
+  position: relative;
+}
+
+#seating-ring {
+  position: relative;
+  width: min(70vh, 560px);
+  height: min(70vh, 560px);
+  border-radius: 50%;
+  border: 2px solid rgba(201, 162, 39, 0.25);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(110, 20, 32, 0.5), rgba(0, 0, 0, 0.4) 75%);
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.6);
+}
+
+#center-info {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  pointer-events: none;
+  text-align: center;
+}
+
+#center-info .round-label {
+  color: var(--paper-dim);
+  font-size: 0.9rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+#center-info .big-phase {
+  color: var(--paper);
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  max-width: 70%;
+}
+
+.seat {
+  position: absolute;
+  width: 96px;
+  margin-left: -48px;
+  margin-top: -34px;
+  text-align: center;
+  transition: filter 0.2s ease, opacity 0.2s ease;
+}
+
+.seat.dead { opacity: 0.45; filter: grayscale(0.9); }
+.seat.dead .seat-name { text-decoration: line-through; }
+
+.seat-name {
+  display: block;
+  color: var(--paper);
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 8px;
+  border: 1px solid rgba(201, 162, 39, 0.3);
+  padding: 0.25rem 0.3rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.seat.drop-target .seat-name {
+  outline: 2px dashed var(--brass);
+  cursor: copy;
+}
+
+.seat .marker-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 0.2rem;
+  min-height: 2.6rem;
+}
+
+/* Official podium plaques (plaque_president / plaque_chancellor PNGs, text
+   runs vertically by design). */
+.plaque-img {
+  display: inline-block;
+  line-height: 0;
+  cursor: default;
+}
+
+.plaque-img img { height: 34px; width: auto; border-radius: 3px; }
+
+.plaque-img.president img { height: 44px; filter: drop-shadow(0 0 6px rgba(224, 179, 58, 0.7)); }
+.plaque-img.president { cursor: grab; touch-action: none; }
+
+.plaque {
+  display: inline-block;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  border-radius: 6px;
+  padding: 0.12rem 0.4rem;
+  border: 1px solid var(--brass);
+  color: var(--ink);
+}
+
+.plaque.president { background: linear-gradient(180deg, #e6c34d, var(--brass-dim)); }
+.plaque.term-limit { background: #4b3b2a; color: var(--paper); border-color: #6b543a; }
+.plaque.nominated { background: #cfe0b4; border-color: #7da05e; }
+.plaque.investigated { background: #d8c8e8; border-color: #8a6bb0; }
+
+.vote-dot {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 999px;
+  border: 2px solid var(--brass-dim);
+  background: rgba(0, 0, 0, 0.4);
+  display: inline-block;
+}
+
+.vote-dot.voted {
+  border-color: var(--brass);
+  box-shadow: 0 0 6px rgba(201, 162, 39, 0.6);
+}
+
+.vote-dot.ja { background: radial-gradient(circle at 35% 30%, #7dc47f, var(--ok)); }
+.vote-dot.nein { background: radial-gradient(circle at 35% 30%, #e07d7d, var(--danger)); }
+
+/* ------------------------------------------------------------------- lobby */
+
+#lobby-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding-top: 0.6rem;
+}
+
+#lobby-logo { height: 150px; width: auto; filter: drop-shadow(0 6px 22px rgba(0,0,0,0.65)); }
+
+#lobby-qr-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(0, 0, 0, 0.35);
+  border: 2px solid var(--brass-dim);
+  border-radius: 16px;
+  padding: 1.1rem 1.6rem;
+}
+
+#join-qr-frame {
+  background: #fff;
+  padding: 12px;
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+#join-qr { display: block; width: 300px; height: 300px; }
+
+.qr-caption { color: var(--paper-dim); font-size: 0.95rem; letter-spacing: 0.05em; }
+
+#join-url {
+  color: var(--brass);
+  font-family: monospace;
+  font-size: 1.15rem;
+}
+
+#lobby-players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+  max-width: 900px;
+}
+
+.lobby-chip {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--brass-dim);
+  color: var(--paper);
+  border-radius: 999px;
+  padding: 0.45em 1em;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+
+#lobby-count { color: var(--paper-dim); font-size: 1.1rem; }
+
+/* ------------------------------------------------------------------ voting */
+
+#vote-panel { margin-top: 0.4rem; }
+
+#vote-status {
+  display: flex;
+  gap: 0.35rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 0.4rem;
+}
+
+#vote-reveal {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.vote-chip {
+  border-radius: 8px;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.85rem;
+  border: 1px solid rgba(201, 162, 39, 0.4);
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--paper);
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.vote-chip .choice { font-family: var(--font-display); text-transform: uppercase; }
+.vote-chip.ja .choice { color: #8fd891; }
+.vote-chip.nein .choice { color: #f08c8c; }
+
+#vote-tally {
+  text-align: center;
+  color: var(--paper);
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  margin-top: 0.4rem;
+  letter-spacing: 0.1em;
+}
+
+/* --------------------------------------------------------------- side column */
+
+#side { display: flex; flex-direction: column; gap: 0.8rem; }
+
+#event-log {
+  height: 260px;
+  overflow-y: auto;
+  font-size: 0.8rem;
+  color: var(--paper-dim);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+#event-log .log-entry { border-bottom: 1px dotted rgba(201, 162, 39, 0.2); padding-bottom: 0.2rem; }
+#event-log .log-entry b { color: var(--paper); }
+
+#veto-indicator {
+  text-align: center;
+  font-family: var(--font-display);
+  color: var(--paper);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+#veto-indicator.unlocked { color: var(--brass); }
+#veto-indicator.requested { color: #f08c8c; animation: blink 1s infinite; }
+
+@keyframes blink { 50% { opacity: 0.4; } }
+
+/* ---------------------------------------------------------------- win splash */
+
+#win-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  background: rgba(10, 4, 5, 0.94);
+  animation: splash-in 0.6s ease;
+}
+
+#win-splash.liberal { background: radial-gradient(circle at 50% 30%, #1d3a5f, rgba(8, 6, 4, 0.96)); }
+#win-splash.fascist { background: radial-gradient(circle at 50% 30%, #7c1f2c, rgba(10, 4, 5, 0.96)); }
+
+#win-splash h1 {
+  font-size: 4.5rem;
+  margin: 0;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.8);
+}
+
+#win-splash .reason { color: var(--paper-dim); font-size: 1.3rem; letter-spacing: 0.1em; text-transform: uppercase; }
+
+@keyframes splash-in {
+  from { opacity: 0; transform: scale(1.05); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+footer { margin-top: auto; }

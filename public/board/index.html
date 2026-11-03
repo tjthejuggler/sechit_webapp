@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Secret Hitler — Board</title>
+  <link rel="icon" href="/assets/logo_transparent.png" />
+  <!-- Absolute asset paths: the page is served at BOTH /board and /board/,
+       and relative URLs would resolve against / (root) and 404. -->
+  <link rel="stylesheet" href="/board/board.css" />
+</head>
+<body>
+  <div id="app">
+    <header id="phase-banner">
+      <img id="header-logo" src="/assets/logo_transparent.png" alt="Secret Hitler"
+           data-localizable />
+      <div id="phase-heading">
+        <h1 id="phase-title">Lobby</h1>
+        <div id="phase-sub">Waiting for players…</div>
+      </div>
+      <div class="board-controls">
+        <button id="btn-start" class="big" disabled>Start Game</button>
+        <button id="btn-begin" class="big hidden">Begin Nomination</button>
+        <button id="btn-reset" class="secondary">New Game</button>
+        <div id="lang-toggle-board"></div>
+      </div>
+    </header>
+
+    <!-- ================================================================ LOBBY -->
+    <section id="lobby-view">
+      <img id="lobby-logo" src="/assets/logo_transparent.png" alt="Secret Hitler logo" data-localizable />
+      <div id="lobby-qr-card">
+        <div id="join-qr-frame">
+          <img id="join-qr" alt="QR code: scan to join the game" width="300" height="300" />
+        </div>
+        <div class="qr-caption" data-i18n="board.lobby.scanToJoin">Scan to join · or open</div>
+        <div id="join-url"></div>
+      </div>
+      <div id="lobby-count">0 players — need 5 to 10</div>
+      <div id="lobby-players"></div>
+    </section>
+
+    <!-- ================================================================ TABLE -->
+    <section id="game-view" class="hidden">
+      <!-- Official board art strip: liberal board (draw pile | track | discard
+           pile) + the two fascist halves for this player count. Policy tiles,
+           pile art + counts, election tracker and the draw QR are overlaid.
+           Board images carry data-localizable so a TR toggle swaps in the
+           Turkish art (identical display geometry, see BOARD_GEO in board.js). -->
+      <div id="boards">
+        <div id="liberal-wrap" class="board-wrap">
+          <img class="board-art" id="liberal-art" src="/assets/board_liberal.png" alt="Liberal policy track" draggable="false" data-localizable />
+          <div id="tracker-overlay"></div>
+          <figure class="pile-overlay draw" id="draw-pile">
+            <img src="/assets/pile_draw.png" alt="Draw pile" draggable="false" />
+            <div class="pile-count" id="draw-count">17</div>
+            <figcaption class="qr-holder hidden" id="draw-qr">
+              <img alt="QR: president scans to draw 3 policies" />
+              <div class="qr-caption" data-i18n="board.art.drawQrCaption">President: scan to draw 3</div>
+            </figcaption>
+          </figure>
+          <figure class="pile-overlay discard" id="discard-pile">
+            <img src="/assets/pile_discard.png" alt="Discard pile" draggable="false" />
+            <div class="pile-count" id="discard-count">0</div>
+          </figure>
+          <div id="liberal-tiles"></div>
+        </div>
+        <div id="fasc-track-wrap" class="board-wrap">
+          <img class="board-art" id="fasc-track-art" src="/assets/board_fascist_7-8.png" alt="Fascist policy track" draggable="false" data-localizable />
+          <div id="fasc-track-tiles"></div>
+        </div>
+        <div id="fasc-sum-wrap" class="board-wrap">
+          <img class="board-art" id="fasc-sum-art" src="/assets/board_fascist_summary_7-8.png" alt="Fascist board summary" draggable="false" data-localizable />
+          <div id="fasc-sum-tiles"></div>
+        </div>
+      </div>
+
+      <div id="layout">
+        <!-- Center: seating ring -->
+        <div id="table-wrap">
+          <div id="seating-ring">
+            <div id="center-info">
+              <div class="round-label" id="center-label"></div>
+              <div class="big-phase" id="center-instruction"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: vote panel, veto, log -->
+        <div id="side">
+          <div id="vote-panel" class="panel hidden">
+            <div class="track-label" data-i18n="board.vote.title">Election Vote</div>
+            <div id="vote-status"></div>
+            <div id="vote-reveal" class="hidden"></div>
+            <div id="vote-tally" class="hidden"></div>
+          </div>
+          <div id="veto-indicator" class="panel">Veto locked</div>
+          <div class="panel">
+            <div class="track-label" data-i18n="board.side.announcer">Announcer</div>
+            <div id="event-log"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Win splash -->
+  <div id="win-splash" class="hidden">
+    <h1 id="win-title"></h1>
+    <div class="reason" id="win-reason"></div>
+    <button id="btn-again" class="big">Play Again</button>
+  </div>
+
+  <footer class="credit">
+    <span data-i18n-html="credit.line">Secret Hitler by Mike Boxleiter, Tommy Maranges, Mac Schubert —
+    licensed CC BY-NC-SA 4.0 ·</span>
+    <a href="https://www.secrethitler.com" target="_blank" rel="noopener">secrethitler.com</a>
+  </footer>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="/board/board.js"></script>
+</body>
+</html>

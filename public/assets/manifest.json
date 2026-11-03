@@ -1,0 +1,245 @@
+{
+  "game": "Secret Hitler",
+  "license": "CC BY-NC-SA 4.0 (secrethitler.com print-and-play PDF)",
+  "generated_utc": "2026-10-30T14:06:17+00:00",
+  "tool": "python3 + Pillow 12.x (scripts/build_assets.py)",
+  "source_root": "/home/twain/Projects/sechit_webapp_assets (read-only)",
+  "assets": {
+    "logo": {
+      "file": "logo.png",
+      "width": 2930,
+      "height": 2044,
+      "kind": "logo"
+    },
+    "logo_transparent": {
+      "file": "logo_transparent.png",
+      "width": 2930,
+      "height": 2044,
+      "kind": "logo",
+      "lang": {
+        "en": "logo_transparent.png",
+        "tr": "logo_transparent_tr.png"
+      }
+    },
+    "plaque_president": {
+      "file": "plaque_president.png",
+      "width": 641,
+      "height": 2034,
+      "kind": "plaque"
+    },
+    "plaque_chancellor": {
+      "file": "plaque_chancellor.png",
+      "width": 429,
+      "height": 2076,
+      "kind": "plaque"
+    },
+    "role_liberal": {
+      "file": "role_liberal.png",
+      "width": 658,
+      "height": 958,
+      "kind": "role"
+    },
+    "role_fascist": {
+      "file": "role_fascist.png",
+      "width": 659,
+      "height": 956,
+      "kind": "role"
+    },
+    "role_hitler": {
+      "file": "role_hitler.png",
+      "width": 657,
+      "height": 957,
+      "kind": "role"
+    },
+    "party_liberal": {
+      "file": "party_liberal.png",
+      "width": 448,
+      "height": 680,
+      "kind": "party"
+    },
+    "party_fascist": {
+      "file": "party_fascist.png",
+      "width": 448,
+      "height": 679,
+      "kind": "party"
+    },
+    "ballot_ja": {
+      "file": "ballot_ja.png",
+      "width": 657,
+      "height": 943,
+      "kind": "ballot"
+    },
+    "ballot_nein": {
+      "file": "ballot_nein.png",
+      "width": 654,
+      "height": 949,
+      "kind": "ballot"
+    },
+    "seal_liberal": {
+      "file": "seal_liberal.png",
+      "width": 618,
+      "height": 619,
+      "kind": "seal"
+    },
+    "seal_fascist": {
+      "file": "seal_fascist.png",
+      "width": 615,
+      "height": 745,
+      "kind": "seal"
+    },
+    "pile_draw": {
+      "file": "pile_draw.png",
+      "width": 691,
+      "height": 992,
+      "kind": "pile-marker"
+    },
+    "pile_discard": {
+      "file": "pile_discard.png",
+      "width": 692,
+      "height": 992,
+      "kind": "pile-marker"
+    },
+    "board_liberal": {
+      "file": "board_liberal.png",
+      "width": 4266,
+      "height": 1515,
+      "kind": "board",
+      "lang": {
+        "en": "board_liberal.png",
+        "tr": "board_liberal_tr.png"
+      }
+    },
+    "board_fascist_5-6": {
+      "file": "board_fascist_5-6.png",
+      "width": 2133,
+      "height": 1499,
+      "kind": "board-half",
+      "lang": {
+        "en": "board_fascist_5-6.png",
+        "tr": "board_fascist_5-6_tr.png"
+      }
+    },
+    "board_fascist_summary_5-6": {
+      "file": "board_fascist_summary_5-6.png",
+      "width": 2139,
+      "height": 1499,
+      "kind": "board-half",
+      "lang": {
+        "en": "board_fascist_summary_5-6.png",
+        "tr": "board_fascist_summary_5-6_tr.png"
+      }
+    },
+    "board_fascist_7-8": {
+      "file": "board_fascist_7-8.png",
+      "width": 2133,
+      "height": 1499,
+      "kind": "board-half",
+      "lang": {
+        "en": "board_fascist_7-8.png",
+        "tr": "board_fascist_7-8_tr.png"
+      }
+    },
+    "board_fascist_summary_7-8": {
+      "file": "board_fascist_summary_7-8.png",
+      "width": 2139,
+      "height": 1499,
+      "kind": "board-half",
+      "lang": {
+        "en": "board_fascist_summary_7-8.png",
+        "tr": "board_fascist_summary_7-8_tr.png"
+      }
+    },
+    "board_fascist_9-10": {
+      "file": "board_fascist_9-10.png",
+      "width": 2133,
+      "height": 1499,
+      "kind": "board-half",
+      "lang": {
+        "en": "board_fascist_9-10.png",
+        "tr": "board_fascist_9-10_tr.png"
+      }
+    },
+    "board_fascist_summary_9-10": {
+      "file": "board_fascist_summary_9-10.png",
+      "width": 2139,
+      "height": 1499,
+      "kind": "board-half",
+      "lang": {
+        "en": "board_fascist_summary_9-10.png",
+        "tr": "board_fascist_summary_9-10_tr.png"
+      }
+    },
+    "board_fascist_5-6_tr": {
+      "file": "board_fascist_5-6_tr.png",
+      "width": 2133,
+      "height": 1499,
+      "kind": "board-half"
+    },
+    "board_fascist_summary_5-6_tr": {
+      "file": "board_fascist_summary_5-6_tr.png",
+      "width": 2139,
+      "height": 1499,
+      "kind": "board-half"
+    },
+    "board_fascist_7-8_tr": {
+      "file": "board_fascist_7-8_tr.png",
+      "width": 2133,
+      "height": 1499,
+      "kind": "board-half"
+    },
+    "board_fascist_summary_7-8_tr": {
+      "file": "board_fascist_summary_7-8_tr.png",
+      "width": 2139,
+      "height": 1499,
+      "kind": "board-half"
+    },
+    "board_fascist_9-10_tr": {
+      "file": "board_fascist_9-10_tr.png",
+      "width": 2133,
+      "height": 1499,
+      "kind": "board-half"
+    },
+    "board_fascist_summary_9-10_tr": {
+      "file": "board_fascist_summary_9-10_tr.png",
+      "width": 2139,
+      "height": 1499,
+      "kind": "board-half"
+    },
+    "board_liberal_tr": {
+      "file": "board_liberal_tr.png",
+      "width": 4266,
+      "height": 1515,
+      "kind": "board"
+    },
+    "logo_transparent_tr": {
+      "file": "logo_transparent_tr.png",
+      "width": 1248,
+      "height": 832,
+      "kind": "logo"
+    }
+  },
+  "missing": [
+    {
+      "name": "policy_liberal",
+      "reason": "No standalone liberal policy tile artwork exists in the PnP PDF; UI should render tiles with CSS (blue rectangle)."
+    },
+    {
+      "name": "policy_fascist",
+      "reason": "No standalone fascist policy tile artwork exists in the PnP PDF; UI should render tiles with CSS (red rectangle)."
+    },
+    {
+      "name": "card_back",
+      "reason": "The PDF contains no card-back design; UI should render card backs with CSS (party colour + seal image reusable from assets)."
+    }
+  ],
+  "notes": [
+    "party_fascist prints rotated 90deg CW on the sheet; shipped upright (portrait).",
+    "ballot_ja / ballot_nein keep the authentic PnP layout: text printed sideways on a portrait card; rotate via CSS if horizontal text is preferred.",
+    "plaque text runs vertically by design (wrap-around podium plaques).",
+    "board_liberal.png joins the two sheet halves (re-cropped from page-10 at 300dpi with mirrored bounds for identical sizes); DRAW pile left, DISCARD right. Junction margins + frame lines are excised so halves display seamlessly.",
+    "board_fascist_N.png / board_fascist_summary_N.png junction edges are trimmed (35px / 29px) so the pair butts seamlessly on screen.",
+    "board_fascist_N.png is the policy-track half; board_fascist_summary_N.png is the powers/summary half (shipped separately for flexible UI layout).",
+    "Turkish variants (*_tr.png) are localised redrawing of the same print geometry: identical seam trims as EN, and board_liberal_tr.png is resampled 0.4% horizontally onto the EN 4266x1515 canvas so overlay coordinates stay valid. Per-language overlay constants live in public/board/board.js (BOARD_GEO).",
+    "Assets WITHOUT a `lang` map (plaques, role/party cards, ballots, seals, pile art, executive-action icons) are language-neutral: EN art is shown for both languages."
+  ]
+}

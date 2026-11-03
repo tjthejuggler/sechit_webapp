@@ -1,0 +1,180 @@
+/* Secret Hitler web app — shared theme.
+   1930s aesthetic: aged cream paper, deep oxblood red, brass/gold accents,
+   blackletter-flavoured display type (system fallbacks, no webfonts needed). */
+
+:root {
+  --paper: #efe3c8;
+  --paper-dim: #dccfae;
+  --ink: #241a12;
+  --oxblood: #6e1420;
+  --oxblood-deep: #430b13;
+  --fascist-black: #191512;
+  --liberal-blue: #2c4a6e;
+  --brass: #c9a227;
+  --brass-dim: #8f7119;
+  --cream-card: #f4ead2;
+  --danger: #a01818;
+  --ok: #2e6b34;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+  --font-display: 'Georgia', 'Times New Roman', serif;
+  --font-body: 'Verdana', 'Tahoma', sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(201, 162, 39, 0.12), transparent 60%),
+    radial-gradient(1400px 900px at 50% 110%, rgba(110, 20, 32, 0.35), transparent 55%),
+    linear-gradient(160deg, #2a1013 0%, #1c0b0d 55%, #150708 100%);
+  background-attachment: fixed;
+}
+
+h1, h2, h3, .display {
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  color: var(--paper);
+  text-transform: uppercase;
+}
+
+.hidden { display: none !important; }
+
+button {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  border: 2px solid var(--brass-dim);
+  border-radius: 8px;
+  background: linear-gradient(180deg, var(--oxblood) 0%, var(--oxblood-deep) 100%);
+  color: var(--paper);
+  padding: 0.65em 1.2em;
+  font-size: 1rem;
+  transition: transform 0.06s ease, filter 0.15s ease;
+}
+
+button:hover:not(:disabled) { filter: brightness(1.15); }
+button:active:not(:disabled) { transform: translateY(1px); }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+button.secondary {
+  background: linear-gradient(180deg, #3a2a1c 0%, #241a12 100%);
+}
+
+button.big {
+  font-size: 1.5rem;
+  padding: 0.8em 1.4em;
+}
+
+input[type="text"] {
+  font-size: 1.2rem;
+  padding: 0.6em 0.8em;
+  border-radius: 8px;
+  border: 2px solid var(--brass-dim);
+  background: var(--cream-card);
+  color: var(--ink);
+  width: 100%;
+}
+
+.card-face {
+  border-radius: 10px;
+  border: 3px solid var(--brass-dim);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.card-face.liberal {
+  background: linear-gradient(170deg, #3d6288 0%, var(--liberal-blue) 60%, #16283c 100%);
+  color: var(--paper);
+}
+
+.card-face.fascist {
+  background: linear-gradient(170deg, #7c1f2c 0%, var(--oxblood-deep) 60%, #2a0508 100%);
+  color: var(--paper);
+}
+
+.card-face.back {
+  background:
+    repeating-linear-gradient(45deg, rgba(201,162,39,0.08) 0 12px, transparent 12px 24px),
+    linear-gradient(170deg, var(--oxblood) 0%, var(--oxblood-deep) 100%);
+  color: var(--paper);
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.2rem;
+  transform: translateX(-50%);
+  background: var(--fascist-black);
+  color: var(--paper);
+  border: 2px solid var(--brass);
+  border-radius: 10px;
+  padding: 0.7em 1.2em;
+  font-size: 1rem;
+  z-index: 999;
+  box-shadow: var(--shadow);
+  max-width: 90vw;
+}
+
+.toast.error { border-color: var(--danger); color: #ffd9d9; }
+
+.panel {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+/* ------------------------------------------------------------- lang toggle */
+
+.lang-toggle {
+  display: inline-flex;
+  border: 1px solid var(--brass-dim);
+  border-radius: 999px;
+  overflow: hidden;
+  align-self: center;
+}
+
+.lang-btn {
+  font-size: 0.62rem;
+  padding: 0.3em 0.7em;
+  letter-spacing: 0.1em;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--paper-dim);
+  opacity: 0.75;
+}
+
+.lang-btn.active {
+  background: linear-gradient(180deg, var(--brass) 0%, var(--brass-dim) 100%);
+  color: var(--ink);
+  opacity: 1;
+}
+
+.lang-btn:hover:not(.active) { filter: none; opacity: 1; }
+
+.credit {
+  color: rgba(239, 227, 200, 0.6);
+  font-size: 0.72rem;
+  text-align: center;
+  padding: 0.6rem;
+  line-height: 1.5;
+}
+
+.credit a { color: var(--brass); }
