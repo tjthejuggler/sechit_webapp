@@ -115,6 +115,15 @@ if [ ! -d "$ROOT_DIR/node_modules" ]; then
   (cd "$ROOT_DIR" && npm install)
 fi
 
+# Vendor bundles (peerjs/qrcode/jsQR in public/vendor) — the LAN board page
+# loads them for client-side QR rendering; build once, rebuild if missing.
+if [ ! -f "$ROOT_DIR/public/vendor/peerjs.min.js" ] \
+  || [ ! -f "$ROOT_DIR/public/vendor/qrcode.min.js" ] \
+  || [ ! -f "$ROOT_DIR/public/vendor/jsQR.js" ]; then
+  echo "[start] Vendor bundles missing — running npm run build:vendor..."
+  (cd "$ROOT_DIR" && npm run build:vendor)
+fi
+
 # ----------------------------------------------------------- port selection
 reclaim_port "$PORT"
 

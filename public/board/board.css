@@ -589,3 +589,16 @@ body {
 }
 
 footer { margin-top: auto; }
+
+/* ------------------------------------------------ online share affordances */
+/* Lobby QR card extras (online mode): short game code + copy/share buttons. */
+.join-code-card {
+  display: flex; align-items: baseline; justify-content: center; gap: 0.6rem;
+  margin-top: 0.8rem;
+}
+.join-code-label { opacity: 0.7; font-size: 0.85rem; }
+.join-code {
+  font-size: 1.6rem; font-weight: 700; letter-spacing: 0.25em;
+  font-family: var(--mono, ui-monospace, monospace);
+}
+#share-row { display: flex; gap: 0.5rem; justify-content: center; margin-top: 0.7rem; }

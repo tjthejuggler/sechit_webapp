@@ -12,15 +12,18 @@
     "test": "npm run test:unit && npm run test:bots",
     "test:unit": "node --test tests/*.test.js",
     "test:bots": "node --test tests/bots/*.test.js",
-    "test:full": "BOT_GAMES_PER_COUNT=10 npm run test:bots"
+    "test:full": "BOT_GAMES_PER_COUNT=10 npm run test:bots",
+    "build:vendor": "node scripts/build-vendor.mjs"
   },
   "dependencies": {
     "express": "^4.21.2",
     "jsqr": "^1.4.0",
+    "peerjs": "^1.5.5",
     "qrcode": "^1.5.4",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
+    "esbuild": "^0.28.2",
     "socket.io-client": "^4.8.4"
   }
 }

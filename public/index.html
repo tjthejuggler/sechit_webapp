@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Secret Hitler</title>
+  <meta name="description" content="Play Secret Hitler online: one shared board screen, everyone joins from their phones with a QR code or game link." />
+  <link rel="icon" href="assets/logo_transparent.png" />
+  <link rel="stylesheet" href="shared/theme.css" />
+  <style>
+    /* Landing card — minimal, reuses the shared 1930s theme tokens. */
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg, #17130e); }
+    .landing {
+      max-width: 34rem; margin: 2rem 1rem; padding: 2.5rem 2rem; text-align: center;
+      background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+    }
+    .landing img.logo { width: min(22rem, 80vw); height: auto; margin-bottom: 1rem; }
+    .landing .tagline { opacity: 0.8; margin: 0 0 1.8rem; }
+    .landing .big { display: block; width: 100%; margin-bottom: 1.6rem; }
+    .landing .join-title { margin: 0 0 0.6rem; }
+    .join-form { display: flex; gap: 0.5rem; }
+    .join-form input {
+      flex: 1; min-width: 0; text-transform: uppercase; letter-spacing: 0.2em;
+      text-align: center; font-size: 1.1rem;
+    }
+    .landing .hint { opacity: 0.55; font-size: 0.85rem; margin-top: 1.6rem; }
+    .credit { margin-top: 1.8rem; font-size: 0.75rem; opacity: 0.6; }
+    .credit a { color: inherit; }
+    .lang-row { display: flex; justify-content: center; margin-bottom: 1rem; }
+    @media (max-width: 480px) { .join-form { flex-direction: column; } }
+  </style>
+</head>
+<body>
+  <main class="landing">
+    <div class="lang-row" id="lang-toggle"></div>
+    <img class="logo" src="assets/logo_transparent.png" alt="Secret Hitler" />
+    <p class="tagline" data-i18n="app.tagline">A hidden-identity party game for 5–10 players — one shared screen, everyone else on their phones.</p>
+    <button id="btn-new-game" class="big" data-i18n="app.start">Start a New Game</button>
+    <h2 class="join-title" data-i18n="app.joinTitle">Joining a friend's game?</h2>
+    <form id="join-form" class="join-form">
+      <input id="join-code-input" type="text" maxlength="6" autocomplete="off" spellcheck="false"
+             placeholder="6-letter game code" data-i18n-placeholder="app.joinPlaceholder" required />
+      <button id="btn-join" type="submit" data-i18n="app.joinBtn">Join Game</button>
+    </form>
+    <p id="join-error" class="hint hidden"></p>
+    <p class="hint">Starting a game shows a board screen with a fresh QR code + join link — keep that tab open while you play; it IS the game server.</p>
+    <footer class="credit">
+      <span data-i18n-html="credit.line">Secret Hitler by Mike Boxleiter, Tommy Maranges, Mac Schubert — licensed CC BY-NC-SA 4.0 ·</span>
+      <a href="https://www.secrethitler.com" target="_blank" rel="noopener">secrethitler.com</a>
+    </footer>
+  </main>
+  <script type="module" src="landing.js"></script>
+</body>
+</html>

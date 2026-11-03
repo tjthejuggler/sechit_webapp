@@ -1,19 +1,14 @@
-// Shared client glue: Socket.IO connection helpers + QR canvas rendering.
+// Shared client glue: connection helpers, QR rendering and token persistence.
 // Both pages (board + phone) import this first.
+//
+// Transport lives in net.js: Socket.IO against the Node server (LAN mode) or
+// PeerJS peer-to-peer to the host's board tab (online/static mode). The
+// helpers below keep the exact call shapes the pages have always used.
 
-// --------------------------------------------------------------- socket glue
-
-export function connectBoard() {
-  const socket = io('/board', { auth: { client: 'board' } });
-  return socket;
-}
-
-export function connectPlay({ token = null } = {}) {
-  const socket = io('/play', { auth: { token, client: 'play' } });
-  return socket;
-}
+export { connectPlay, detectMode, MODE, generateGameCode } from './net.js';
 
 // Fire a player action; resolves { ok, result, you } or throws { code, message }.
+// Works on both transports (NetSocket mimics the socket.io ack protocol).
 export function sendAction(socket, type, args = {}) {
   return new Promise((resolve, reject) => {
     socket.timeout(8000).emit('action', { type, ...args }, (err, res) => {
@@ -37,23 +32,41 @@ export function socketEmit(socket, event, payload) {
 }
 
 // ------------------------------------------------------------------ QR codes
-// Rendering is server-side (`qrcode` npm lib): /api/qr.png?t=<payload> returns
-// a PNG. This keeps every client dependency-free; jsQR (scanning) is the only
-// camera-side library.
+// Rendering is fully client-side (public/vendor/qrcode.min.js — the qrcode
+// npm package bundled for the browser) so the static site needs no server.
+// The Node server still offers /api/qr.png for compatibility, but clients no
+// longer call it.
 
-export function qrImageUrl(text) {
-  return `/api/qr.png?t=${encodeURIComponent(text)}`;
+// Resolve a QR payload to a data-URL PNG. No-op (returns null) if the vendored
+// lib failed to load.
+export function qrDataUrl(text, { width = 512, margin = 2 } = {}) {
+  return new Promise((resolve) => {
+    if (typeof window.QRCode?.toDataURL !== 'function') return resolve(null);
+    window.QRCode.toDataURL(String(text), { width, margin, errorCorrectionLevel: 'M' }, (err, url) => {
+      resolve(err ? null : url);
+    });
+  });
+}
+
+// Point an existing <img> at a freshly rendered QR (async, keeps prior src on
+// failure). Deduplicates concurrent updates per element.
+export async function setQrImg(img, text) {
+  if (!img) return;
+  if (img.dataset.qrFor === text && img.src) return;
+  img.dataset.qrFor = text;
+  const url = await qrDataUrl(text);
+  if (url && img.dataset.qrFor === text) img.src = url;
 }
 
 // Render a QR into `el` (any element) as an <img>. Returns the created img.
-export function renderQr(el, text, { size = 256, alt = 'QR code' } = {}) {
+export async function renderQr(el, text, { size = 256, alt = 'QR code' } = {}) {
   const img = document.createElement('img');
   img.className = 'qr-img';
   img.alt = alt;
   img.width = size;
   img.height = size;
-  img.src = qrImageUrl(text);
   el.replaceChildren(img);
+  await setQrImg(img, text);
   return img;
 }
 
@@ -142,17 +155,30 @@ export function showToast(message, { error = false, ms = 3200 } = {}) {
   el._timer = setTimeout(() => el.classList.add('hidden'), ms);
 }
 
-// Session token persistence (localStorage) for reconnect.
+// Session token persistence (localStorage) for reconnect. Tokens are stored
+// PER GAME CODE so one device can play in multiple games without collisions;
+// the original global key is kept as the LAN fallback (single game server).
 const TOKEN_KEY = 'sechit.session.token';
 
-export function loadToken() {
-  return localStorage.getItem(TOKEN_KEY);
+function tokenKey(gameId) {
+  return gameId ? `${TOKEN_KEY}.${String(gameId).toUpperCase()}` : TOKEN_KEY;
 }
 
-export function saveToken(token) {
-  if (token) localStorage.setItem(TOKEN_KEY, token);
+export function loadToken(gameId = null) {
+  return localStorage.getItem(tokenKey(gameId));
 }
 
-export function clearToken() {
-  localStorage.removeItem(TOKEN_KEY);
+export function saveToken(token, gameId = null) {
+  if (token) localStorage.setItem(tokenKey(gameId), token);
+}
+
+export function clearToken(gameId = null) {
+  localStorage.removeItem(tokenKey(gameId));
+}
+
+// Current game code from the URL (?g=), normalized uppercase; null on the
+// LAN server (single game) or when absent.
+export function urlGameCode() {
+  const g = new URLSearchParams(location.search).get('g');
+  return g ? g.trim().toUpperCase() : null;
 }

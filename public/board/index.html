@@ -4,15 +4,15 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Secret Hitler — Board</title>
-  <link rel="icon" href="/assets/logo_transparent.png" />
+  <link rel="icon" href="../assets/logo_transparent.png" />
   <!-- Absolute asset paths: the page is served at BOTH /board and /board/,
        and relative URLs would resolve against / (root) and 404. -->
-  <link rel="stylesheet" href="/board/board.css" />
+  <link rel="stylesheet" href="board.css" />
 </head>
 <body>
   <div id="app">
     <header id="phase-banner">
-      <img id="header-logo" src="/assets/logo_transparent.png" alt="Secret Hitler"
+      <img id="header-logo" src="../assets/logo_transparent.png" alt="Secret Hitler"
            data-localizable />
       <div id="phase-heading">
         <h1 id="phase-title">Lobby</h1>
@@ -28,13 +28,23 @@
 
     <!-- ================================================================ LOBBY -->
     <section id="lobby-view">
-      <img id="lobby-logo" src="/assets/logo_transparent.png" alt="Secret Hitler logo" data-localizable />
+      <img id="lobby-logo" src="../assets/logo_transparent.png" alt="Secret Hitler logo" data-localizable />
       <div id="lobby-qr-card">
         <div id="join-qr-frame">
           <img id="join-qr" alt="QR code: scan to join the game" width="300" height="300" />
         </div>
         <div class="qr-caption" data-i18n="board.lobby.scanToJoin">Scan to join · or open</div>
         <div id="join-url"></div>
+        <!-- Online mode: short game code + copy/share affordances (hidden on
+             the LAN server, where the QR + URL suffice). -->
+        <div id="join-code-card" class="join-code-card">
+          <span class="join-code-label" data-i18n="board.lobby.codeLabel">Game code</span>
+          <span id="join-code" class="join-code"></span>
+        </div>
+        <div id="share-row" class="hidden">
+          <button id="btn-copy-link" class="secondary" data-i18n="board.lobby.copy">Copy link</button>
+          <button id="btn-share" class="secondary" data-i18n="board.lobby.share">Share</button>
+        </div>
       </div>
       <div id="lobby-count">0 players — need 5 to 10</div>
       <!-- Pre-game seating circle: drag a player onto another seat (or tap
@@ -54,10 +64,10 @@
            Turkish art (identical display geometry, see BOARD_GEO in board.js). -->
       <div id="boards">
         <div id="liberal-wrap" class="board-wrap">
-          <img class="board-art" id="liberal-art" src="/assets/board_liberal.png" alt="Liberal policy track" draggable="false" data-localizable />
+          <img class="board-art" id="liberal-art" src="../assets/board_liberal.png" alt="Liberal policy track" draggable="false" data-localizable />
           <div id="tracker-overlay"></div>
           <figure class="pile-overlay draw" id="draw-pile">
-            <img src="/assets/pile_draw.png" alt="Draw pile" draggable="false" />
+            <img src="../assets/pile_draw.png" alt="Draw pile" draggable="false" />
             <div class="pile-count" id="draw-count">17</div>
             <figcaption class="qr-holder hidden" id="draw-qr">
               <img alt="QR: president scans to draw 3 policies" />
@@ -65,17 +75,17 @@
             </figcaption>
           </figure>
           <figure class="pile-overlay discard" id="discard-pile">
-            <img src="/assets/pile_discard.png" alt="Discard pile" draggable="false" />
+            <img src="../assets/pile_discard.png" alt="Discard pile" draggable="false" />
             <div class="pile-count" id="discard-count">0</div>
           </figure>
           <div id="liberal-tiles"></div>
         </div>
         <div id="fasc-track-wrap" class="board-wrap">
-          <img class="board-art" id="fasc-track-art" src="/assets/board_fascist_7-8.png" alt="Fascist policy track" draggable="false" data-localizable />
+          <img class="board-art" id="fasc-track-art" src="../assets/board_fascist_7-8.png" alt="Fascist policy track" draggable="false" data-localizable />
           <div id="fasc-track-tiles"></div>
         </div>
         <div id="fasc-sum-wrap" class="board-wrap">
-          <img class="board-art" id="fasc-sum-art" src="/assets/board_fascist_summary_7-8.png" alt="Fascist board summary" draggable="false" data-localizable />
+          <img class="board-art" id="fasc-sum-art" src="../assets/board_fascist_summary_7-8.png" alt="Fascist board summary" draggable="false" data-localizable />
           <div id="fasc-sum-tiles"></div>
         </div>
       </div>
@@ -122,7 +132,12 @@
     <a href="https://www.secrethitler.com" target="_blank" rel="noopener">secrethitler.com</a>
   </footer>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script type="module" src="/board/board.js"></script>
+  <!-- Vendor bundles (built by `npm run build:vendor`): PeerJS hosts/bridges
+       the online P2P connection; qrcode renders join/draw QRs client-side.
+       The Socket.IO client is loaded dynamically by shared/net.js only when
+       the Node server is detected (LAN mode). -->
+  <script src="../vendor/peerjs.min.js"></script>
+  <script src="../vendor/qrcode.min.js"></script>
+  <script type="module" src="board.js"></script>
 </body>
 </html>

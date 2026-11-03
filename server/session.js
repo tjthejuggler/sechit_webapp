@@ -6,9 +6,10 @@
 // execution) is pick-from-list on the entitled player's phone, and the 2-card
 // hand is delivered to the chancellor's phone at discard time (receive is a
 // plain ack). Only the BOARD's deck QR remains (president draws 3).
-import crypto from 'node:crypto';
+import { randomHex, sha256HexSync } from './engine/random.js';
 import {
   GameEngine,
+  Deck,
   TokenService,
   EngineError,
   PHASE,
@@ -25,13 +26,17 @@ export class GameSession {
    * @param {(payload: object) => void} [opts.onState] called after every state change
    * @param {number} [opts.devPlayers] DEV_PLAYERS: auto-create N dev seats (P1..PN)
    */
-  constructor({ baseUrl, onState = null, devPlayers = 0, engineEventWrapper = null, investigateFirstPower = false } = {}) {
+  constructor({ baseUrl, gameId = null, onState = null, devPlayers = 0, engineEventWrapper = null, investigateFirstPower = false } = {}) {
     this.baseUrl = String(baseUrl || '').replace(/\/$/, '');
     this.onState = typeof onState === 'function' ? onState : null;
     // Optional observer wrapper for engine events (dev-mode console logger).
     // It receives the session's own handler and must never replace its logic.
     this.engineEventWrapper = typeof engineEventWrapper === 'function' ? engineEventWrapper : null;
-    this.gameId = crypto.randomBytes(3).toString('hex'); // short public game id
+    // Short public game id. The browser host passes its own randomly generated
+    // game code (it doubles as the PeerJS peer id); the Node server lets one
+    // be generated here.
+    this.gameId = String(gameId || randomHex(3));
+    this.fixedGameId = gameId ? this.gameId : null; // survives reset() (browser host peer id)
     this.lobby = [];           // [{ id, name, dev }] in join (seat) order
     this.sessions = new Map(); // sessionToken -> { playerId, name }
     this.engine = null;
@@ -72,19 +77,19 @@ export class GameSession {
     while (this.lobby.some((p) => p.name.toLowerCase() === unique.toLowerCase())) {
       unique = `${name} ${n++}`;
     }
-    const playerId = `p${crypto.randomBytes(4).toString('hex')}`;
+    const playerId = `p${randomHex(4)}`;
     // Dev seats get a DETERMINISTIC token (sha of gameId + index) so start.sh
     // can construct per-player URLs without an API round-trip per seat.
     const token = dev
-      ? crypto.createHash('sha256').update(`${this.gameId}:dev:${tokenSeed}`).digest('hex')
-      : crypto.randomBytes(16).toString('hex');
+      ? sha256HexSync(`${this.gameId}:dev:${tokenSeed}`)
+      : randomHex(16);
     this.lobby.push({ id: playerId, name: unique, dev });
     this.sessions.set(token, { playerId, name: unique });
     return { token, playerId, name: unique, dev };
   }
 
   joinUrl() {
-    return `${this.baseUrl}/play?g=${this.gameId}`;
+    return `${this.baseUrl}/play/?g=${this.gameId}`;
   }
 
   // ------------------------------------------------------------------ lobby
@@ -152,7 +157,7 @@ export class GameSession {
       .filter((p) => p.dev)
       .map((p, i) => ({
         name: p.name,
-        url: `${this.baseUrl}/play?p=${byToken.get(p.id) ?? `dev-${i + 1}`}`,
+        url: `${this.baseUrl}/play/?p=${byToken.get(p.id) ?? `dev-${i + 1}`}`,
       }));
   }
 
@@ -174,6 +179,90 @@ export class GameSession {
     this.#changed();
   }
 
+  // Browser-host resume: re-attach a previously serialized engine (see
+  // public/board/host.js). Wires the engine event delegate exactly like
+  // startGame() would; the engine object itself is rebuilt by the caller.
+  attachRestoredEngine(engine) {
+    const delegate = (event) => this.#onEngineEvent(event);
+    engine.onEvent = this.engineEventWrapper ? this.engineEventWrapper(delegate) : delegate;
+    engine.investigateFirstPower = this.investigateFirstPower;
+    this.engine = engine;
+  }
+
+  // ------------------------------------------------------------- persistence
+
+  // Full serializable snapshot (plain JSON) of everything needed to resume
+  // this exact game elsewhere or after a host reload: lobby, seat tokens, the
+  // engine state machine, the draw token and session gates.
+  snapshot() {
+    return {
+      v: 1,
+      code: this.gameId,
+      savedAt: Date.now(),
+      lobby: this.lobby,
+      sessions: [...this.sessions],
+      drawToken: this.drawToken,
+      presidentDrew: this.presidentDrew,
+      transferPending: this.transferPending,
+      investigationAnnounce: this.investigationAnnounce
+        ? { ...this.investigationAnnounce, ackedIds: [...this.investigationAnnounce.ackedIds] }
+        : null,
+      tokens: [...this.tokens.tokens],
+      engine: this.engine
+        ? {
+            seq: this.engine._seq,
+            state: {
+              ...this.engine.state,
+              // Map/Set fields serialize as {} — convert explicitly.
+              votes: [...this.engine.state.votes],
+              investigatedIds: [...this.engine.state.investigatedIds],
+              deck: {
+                draw: this.engine.state.deck.draw.slice(),
+                discard: this.engine.state.deck.discard.slice(),
+                reshuffled: !!this.engine.state.deck.reshuffled,
+              },
+            },
+          }
+        : null,
+    };
+  }
+
+  // Rebuild a session from snapshot() output. The deck is rehydrated with a
+  // fresh rng — future draw order differs from the pre-snapshot stream, which
+  // is equivalent to a reshuffle of unseen cards (no information leak).
+  // onState is NOT restored (the new owner re-registers it).
+  static fromSnapshot(snap, opts = {}) {
+    if (!snap || snap.v !== 1) throw new Error('BAD_SNAPSHOT');
+    const session = new GameSession({ ...opts, gameId: snap.code ?? opts.gameId });
+    session.lobby = snap.lobby ?? [];
+    session.sessions = new Map(snap.sessions ?? []);
+    session.tokens.tokens = new Map(snap.tokens ?? []);
+    session.drawToken = snap.drawToken ?? null;
+    session.presidentDrew = !!snap.presidentDrew;
+    session.transferPending = !!snap.transferPending;
+    session.investigationAnnounce = snap.investigationAnnounce
+      ? { ...snap.investigationAnnounce, ackedIds: new Set(snap.investigationAnnounce.ackedIds ?? []) }
+      : null;
+    if (snap.engine?.state) {
+      const engine = new GameEngine({});
+      engine._seq = snap.engine.seq ?? 0;
+      const deck = new Deck(engine.rng);
+      const d = snap.engine.state.deck ?? {};
+      deck.draw = d.draw ?? [];
+      deck.discard = d.discard ?? [];
+      deck.reshuffled = !!d.reshuffled;
+      engine.state = {
+        ...snap.engine.state,
+        votes: new Map(snap.engine.state.votes ?? []),
+        investigatedIds: new Set(snap.engine.state.investigatedIds ?? []),
+        deck,
+      };
+      session.attachRestoredEngine(engine);
+    }
+    session.onState = null;
+    return session;
+  }
+
   beginNomination() {
     this.#gateAnnounce();
     this.#eng().beginNomination();
@@ -190,7 +279,7 @@ export class GameSession {
     this.transferPending = false;
     this.investigationAnnounce = null;
     this.flash = {};
-    this.gameId = crypto.randomBytes(3).toString('hex');
+    this.gameId = this.fixedGameId ?? randomHex(3);
     // Dev mode persists across resets: seats are re-created with the new
     // gameId (fresh deterministic tokens; open dev tabs re-bind by URL token).
     if (this.devPlayers > 0) this.#createDevSeats();
@@ -382,7 +471,7 @@ export class GameSession {
     const drawQr = view.phase === PHASE.LEGISLATIVE_PRESIDENT
       && !this.presidentDrew
       && this.drawToken
-      ? `${this.baseUrl}/play?d=${this.drawToken}`
+      ? `${this.baseUrl}/play/?g=${this.gameId}&d=${this.drawToken}`
       : null;
     return {
       ...view,

@@ -24,6 +24,19 @@ export const DICT = {
     'app.title': 'Secret Hitler',
     'board.title': 'Secret Hitler — Board',
     'play.title': 'Secret Hitler — Play',
+    'app.tagline': 'A hidden-identity party game for 5–10 players — one shared screen, everyone else on their phones.',
+    'app.start': 'Start a New Game',
+    'app.joinTitle': 'Joining a friend\'s game?',
+    'app.joinPlaceholder': '6-letter game code',
+    'app.joinBtn': 'Join Game',
+    'app.joinBadCode': 'Enter the 6-letter game code from the host\'s screen.',
+    'board.lobby.codeLabel': 'Game code',
+    'board.lobby.copy': 'Copy link',
+    'board.lobby.copied': 'Link copied — send it to your friends!',
+    'board.lobby.copyFailed': 'Could not copy the link.',
+    'board.lobby.share': 'Share',
+    'board.lobby.shareText': 'Join my Secret Hitler game! Code: {code}',
+    'board.toast.hostFailed': 'Could not start the online host: {msg}',
     'credit.line': 'Secret Hitler by Mike Boxleiter, Tommy Maranges, Mac Schubert — licensed CC BY-NC-SA 4.0 ·',
     'lang.title': 'Language',
     'lang.en': 'EN',
@@ -385,6 +398,19 @@ export const DICT = {
     'app.title': 'Gizli Hitler',
     'board.title': 'Gizli Hitler — Masa',
     'play.title': 'Gizli Hitler — Oyna',
+    'app.tagline': '5–10 kişilik gizli kimlikli parti oyunu — tek ortak ekran, herkes telefonundan.',
+    'app.start': 'Yeni Oyun Başlat',
+    'app.joinTitle': "Arkadaşının oyununa mı katılıyorsun?",
+    'app.joinPlaceholder': '6 harfli oyun kodu',
+    'app.joinBtn': 'Oyuna Katıl',
+    'app.joinBadCode': "Ev sahibinin ekranındaki 6 harfli oyun kodunu gir.",
+    'board.lobby.codeLabel': 'Oyun kodu',
+    'board.lobby.copy': 'Bağlantıyı kopyala',
+    'board.lobby.copied': 'Bağlantı kopyalandı — arkadaşlarına gönder!',
+    'board.lobby.copyFailed': 'Bağlantı kopyalanamadı.',
+    'board.lobby.share': 'Paylaş',
+    'board.lobby.shareText': 'Gizli Hitler oyunuma katıl! Kod: {code}',
+    'board.toast.hostFailed': 'Çevrimiçi ev başlatılamadı: {msg}',
     'credit.line': 'Secret Hitler — Mike Boxleiter, Tommy Maranges, Mac Schubert — CC BY-NC-SA 4.0 lisansıyla ·',
     'lang.title': 'Dil',
     'lang.en': 'EN',
@@ -814,14 +840,19 @@ export function errorText(code, fallback) {
 
 // ------------------------------------------------- localized asset swapping
 
-// '/assets/board_liberal.png' -> '/assets/board_liberal_tr.png' for TR when a
-// variant exists; unchanged otherwise. Works on any /assets/<name>.png path.
+// Asset directory resolved from THIS module's URL — correct under a domain
+// root and a GitHub Pages project sub-path alike.
+const ASSET_BASE = new URL('../assets/', import.meta.url);
+
+// '../assets/board_liberal.png' -> absolute TR variant URL when one exists;
+// unchanged otherwise. Works on any assets/<name>.<ext> reference.
 export function localizedAssetPath(src) {
   if (currentLang !== 'tr' || typeof src !== 'string') return src;
-  const m = src.match(/^\/assets\/(.+)\.(png|svg|jpg|webp)$/i);
+  const file = src.split('/').pop();
+  const m = file.match(/^(.+)\.(png|svg|jpg|webp)$/i);
   if (!m) return src;
   const trName = ASSET_LANG[m[1]];
-  return trName ? `/assets/${trName}.${m[2]}` : src;
+  return trName ? new URL(`${trName}.${m[2]}`, ASSET_BASE).href : src;
 }
 
 // Swap every <img data-localizable> under `root` to the active language's

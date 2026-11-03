@@ -21,7 +21,9 @@ import {
   showToast,
   loadToken,
   saveToken,
+  urlGameCode,
 } from '../shared/shared.js';
+import { deadSocket } from '../shared/net.js';
 import {
    t, getLang, setLang, onChange, applyI18n, createLangToggle, errorText,
  } from '../shared/i18n.js';
@@ -32,15 +34,16 @@ import {
 
 const $ = (sel) => document.querySelector(sel);
 
+// Relative asset paths keep the page working under a GitHub Pages sub-path.
 const ROLE_ART = {
-  liberal: '/assets/role_liberal.png',
-  fascist: '/assets/role_fascist.png',
-  hitler: '/assets/role_hitler.png',
+  liberal: '../assets/role_liberal.png',
+  fascist: '../assets/role_fascist.png',
+  hitler: '../assets/role_hitler.png',
 };
 
 const PARTY_ART = {
-  liberal: '/assets/party_liberal.png',
-  fascist: '/assets/party_fascist.png',
+  liberal: '../assets/party_liberal.png',
+  fascist: '../assets/party_fascist.png',
 };
 
 function roleDesc(role) {
@@ -51,8 +54,10 @@ function roleTitle(role) {
   return { liberal: t('play.card.liberal'), fascist: t('play.card.fascist'), hitler: 'Hitler' }[role] ?? role;
 }
 
+// Current online game code (?g=) — null on the LAN server (single game).
+const gameCode = urlGameCode();
 let you = null;          // latest private view for this player
-let myToken = loadToken();
+let myToken = loadToken(gameCode);
 let staleToken = false; // set when the server reports our seat vanished
 let myId = null;
 let myName = null;
@@ -67,7 +72,36 @@ let lastPhaseSeen = null;     // tab-focus transitions (ROLE_REVEAL ⇄ game)
 
 // ------------------------------------------------------------------ socket
 
-const socket = connectPlay({ token: myToken });
+// Async connect (top-level await): Socket.IO on the LAN server, PeerJS to the
+// host's board tab when statically hosted. Failures leave a dead socket + a
+// clear message on the join screen instead of a broken page.
+let socket;
+let bootError = null;
+try {
+  socket = await connectPlay({ token: myToken });
+} catch (err) {
+  bootError = err?.code === 'NO_GAME_CODE'
+    ? 'No game code in this link — ask the host to resend it.'
+    : 'Could not reach the game host. Check the code and try again.';
+  socket = deadSocket(bootError);
+}
+function showBootError() {
+  if (!bootError) return;
+  const el = document.querySelector('#join-status');
+  if (el) el.textContent = bootError;
+}
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', showBootError, { once: true });
+} else {
+  showBootError();
+}
+
+socket.on('connect_error', (err) => {
+  const el = document.querySelector('#join-status');
+  if (el && (err?.code === 'GAME_NOT_FOUND' || err?.message?.includes('unavailable'))) {
+    el.textContent = 'That game is not online right now — the host board must be open.';
+  }
+});
 
 socket.on('hello', (msg) => {
   if (msg.reconnectedAs) myId = msg.reconnectedAs;
@@ -146,7 +180,7 @@ function identifyAs(token) {
   const draw = params.get('d');
   if (devToken && /^[a-f0-9]{8,64}$/i.test(devToken)) {
     myToken = devToken;
-    saveToken(myToken);
+    saveToken(myToken, gameCode);
     identifyAs(myToken).then(() => renderLobby());
   }
   if (draw) pendingUrlAction = { kind: 'draw', token: draw };
@@ -336,7 +370,7 @@ $('#join-form').addEventListener('submit', async (e) => {
     myToken = res.token;
     myId = res.playerId;
     myName = res.name;
-    saveToken(myToken);
+    saveToken(myToken, gameCode);
     $('#join-form').classList.add('hidden');
     $('#join-status').textContent = t('play.join.welcome', { name: res.name });
     showToast(t('play.join.joinedToast', { name: res.name }));
@@ -965,7 +999,7 @@ function renderRejoinPicker(state) {
         const res = await socketEmit(socket, 'rejoin', { playerId: p.id });
         staleToken = false;
         myToken = res.token;
-        saveToken(myToken);
+        saveToken(myToken, gameCode);
         myId = res.playerId;
         myName = res.name;
         showToast(t('play.rejoin.welcome', { name: res.name }));

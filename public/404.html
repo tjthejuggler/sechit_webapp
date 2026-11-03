@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Secret Hitler</title>
+  <script>
+    // GitHub Pages serves this for any unknown path (e.g. a stale /board URL
+    // without the trailing slash). Send the visitor to the landing page,
+    // preserving any project sub-path.
+    (() => {
+      const m = location.pathname.match(/^(.*\/)(board|play)\/?$/);
+      location.replace(m ? m[1] : '../');
+    })();
+  </script>
+</head>
+<body>
+  <p>Redirecting… <a href="../">Secret Hitler</a></p>
+</body>
+</html>

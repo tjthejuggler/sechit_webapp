@@ -4,10 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>Secret Hitler — Play</title>
-  <link rel="icon" href="/assets/logo_transparent.png" />
+  <link rel="icon" href="../assets/logo_transparent.png" />
   <!-- Absolute asset paths: the page is served at BOTH /play and /play/,
        and relative URLs would resolve against / (root) and 404. -->
-  <link rel="stylesheet" href="/play/play.css" />
+  <link rel="stylesheet" href="play.css" />
 </head>
 <body>
   <main id="app">
@@ -22,7 +22,7 @@
     <div id="page-action" class="page">
     <!-- ============================================================ JOIN -->
     <section id="screen-join" class="screen">
-      <img class="join-logo" src="/assets/logo_transparent.png" alt="Secret Hitler" data-localizable />
+      <img class="join-logo" src="../assets/logo_transparent.png" alt="Secret Hitler" data-localizable />
       <h1 class="display" data-i18n="app.title">Secret Hitler</h1>
       <p id="join-status" class="muted">Enter your name to join the table.</p>
       <form id="join-form">
@@ -70,10 +70,10 @@
       <p class="muted center" id="vote-context"></p>
       <div id="vote-buttons">
         <button id="btn-ja" class="vote-art" type="button">
-          <img src="/assets/ballot_ja.png" alt="Ja ballot" draggable="false" />
+          <img src="../assets/ballot_ja.png" alt="Ja ballot" draggable="false" />
         </button>
         <button id="btn-nein" class="vote-art" type="button">
-          <img src="/assets/ballot_nein.png" alt="Nein ballot" draggable="false" />
+          <img src="../assets/ballot_nein.png" alt="Nein ballot" draggable="false" />
         </button>
       </div>
       <p id="vote-waiting" class="muted center hidden" data-i18n="play.vote.waiting">Vote cast — waiting for others…</p>
@@ -92,7 +92,7 @@
         <p class="center muted" data-i18n-html="play.legisPres.discardNote">Discard <b>one</b> policy — the other two go to the chancellor.</p>
         <div id="discard-cards" class="policy-row"></div>
         <div id="discard-trash" class="trash-zone">
-          <img src="/assets/pile_discard.png" alt="" draggable="false" />
+          <img src="../assets/pile_discard.png" alt="" draggable="false" />
           <span data-i18n="play.card.discardZone">Discard</span>
         </div>
       </div>
@@ -114,11 +114,11 @@
         <div id="enact-cards" class="policy-row"></div>
         <div id="enact-boards" class="boards-zone">
           <div class="board-half liberal">
-            <img src="/assets/seal_liberal.png" alt="" draggable="false" />
+            <img src="../assets/seal_liberal.png" alt="" draggable="false" />
             <span class="board-count" id="enact-lib-count">0/5</span>
           </div>
           <div class="board-half fascist">
-            <img src="/assets/seal_fascist.png" alt="" draggable="false" />
+            <img src="../assets/seal_fascist.png" alt="" draggable="false" />
             <span class="board-count" id="enact-fasc-count">0/6</span>
           </div>
           <span class="boards-label" data-i18n="play.card.enactZone">Play Policy</span>
@@ -180,14 +180,14 @@
         <h3 data-i18n="play.page.board.government">Government</h3>
         <div class="gov-row">
           <div class="gov-plaque">
-            <img src="/assets/plaque_president.png" alt="" draggable="false" />
+            <img src="../assets/plaque_president.png" alt="" draggable="false" />
             <div>
               <span class="gov-role" data-i18n="play.page.board.president">President</span>
               <span class="gov-name" id="board-pres-name">—</span>
             </div>
           </div>
           <div class="gov-plaque">
-            <img src="/assets/plaque_chancellor.png" alt="" draggable="false" />
+            <img src="../assets/plaque_chancellor.png" alt="" draggable="false" />
             <div>
               <span class="gov-role" data-i18n="play.page.board.chancellor">Chancellor</span>
               <span class="gov-name" id="board-chanc-name">—</span>
@@ -199,12 +199,12 @@
       <div class="info-card">
         <h3 data-i18n="play.page.board.policies">Policies</h3>
         <div class="board-track liberal">
-          <img src="/assets/seal_liberal.png" alt="" draggable="false" />
+          <img src="../assets/seal_liberal.png" alt="" draggable="false" />
           <div class="track-slots" id="board-lib-slots"></div>
           <span class="board-count" id="board-lib-count">0/5</span>
         </div>
         <div class="board-track fascist">
-          <img src="/assets/seal_fascist.png" alt="" draggable="false" />
+          <img src="../assets/seal_fascist.png" alt="" draggable="false" />
           <div class="track-slots" id="board-fasc-slots"></div>
           <span class="board-count" id="board-fasc-count">0/6</span>
         </div>
@@ -219,12 +219,12 @@
         <h3 data-i18n="play.page.board.piles">Card Piles</h3>
         <div class="piles-row">
           <div class="pile-box">
-            <img src="/assets/pile_draw.png" alt="" draggable="false" />
+            <img src="../assets/pile_draw.png" alt="" draggable="false" />
             <span class="pile-label" data-i18n="play.page.board.drawPile">Draw pile</span>
             <span class="board-count" id="board-draw-count">0</span>
           </div>
           <div class="pile-box">
-            <img src="/assets/pile_discard.png" alt="" draggable="false" />
+            <img src="../assets/pile_discard.png" alt="" draggable="false" />
             <span class="pile-label" data-i18n="play.page.board.discardPile">Discard pile</span>
             <span class="board-count" id="board-discard-count">0</span>
           </div>
@@ -301,7 +301,12 @@
     <a href="https://www.secrethitler.com" target="_blank" rel="noopener">secrethitler.com</a>
   </footer>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script type="module" src="/play/play.js"></script>
+  <!-- Vendor bundles (built by `npm run build:vendor`): PeerJS connects to
+       the host's board tab in online mode; jsQR drives the camera QR
+       scanning. The Socket.IO client is loaded dynamically by shared/net.js
+       only when the Node server is detected (LAN mode). -->
+  <script src="../vendor/peerjs.min.js"></script>
+  <script src="../vendor/jsQR.js"></script>
+  <script type="module" src="play.js"></script>
 </body>
 </html>

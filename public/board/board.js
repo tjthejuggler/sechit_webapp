@@ -10,7 +10,9 @@
 // i18n: every rendered string goes through t() (public/shared/i18n.js); the
 // EN|TR toggle re-renders the latest state live and swaps localizable board
 // art to the Turkish variants (identical display geometry — see BOARD_GEO).
-import { connectBoard, showToast, qrImageUrl } from '../shared/shared.js';
+import { showToast, setQrImg } from '../shared/shared.js';
+import { detectMode, MODE, connectBoardLan, deadSocket } from '../shared/net.js';
+import { startHost } from './host.js';
 import {
   t, getLang, setLang, onChange, applyI18n, createLangToggle,
   localizedAssetPath, errorText,
@@ -94,7 +96,25 @@ function geo() {
 
 let latestState = null;
 
-const socket = connectBoard();
+// Connection bootstrap (top-level await). LAN mode: plain Socket.IO client of
+// the Node server, exactly as before. Static/online mode: THIS page becomes
+// the authoritative host — the engine runs here, phones reach it over PeerJS,
+// and the UI keeps talking to the same NetSocket loopback.
+let socket;
+let hostInfo = null;
+try {
+  const mode = await detectMode();
+  if (mode === MODE.LAN) {
+    socket = await connectBoardLan();
+  } else {
+    hostInfo = await startHost();
+    socket = hostInfo.socket;
+  }
+} catch (err) {
+  socket = deadSocket('Could not start the game host.');
+  showToast(t('board.toast.hostFailed', { msg: err?.message ?? err }), { error: true });
+}
+
 socket.on('state', (state) => {
   latestState = state;
   render(state);
@@ -118,17 +138,57 @@ $('#btn-again').dataset.i18n = 'board.btn.again';
 $('#join-qr').dataset.i18nAlt = 'board.lobby.qrAlt';
 applyI18n();
 
-// Socket-independent fallback: make sure the lobby join QR is visible even
-// before (or without) a socket connection, straight from the REST API.
-fetch('/api/join-url')
-  .then((r) => (r.ok ? r.json() : null))
-  .then((data) => {
-    if (data?.url && !$('#join-qr').src) {
-      $('#join-qr').src = qrImageUrl(data.url);
-      $('#join-url').textContent = data.url;
+// ------------------------------------------------------ share / copy controls
+// Online mode affordances under the lobby QR: the short game code, a copy
+// button for the full join URL and a native share sheet where available.
+// Hidden entirely in LAN mode (the QR + URL are enough there).
+if (hostInfo) {
+  $('#btn-copy-link')?.addEventListener('click', async () => {
+    const url = $('#join-url')?.dataset.copyText ?? $('#join-url')?.textContent ?? '';
+    try {
+      await navigator.clipboard.writeText(url);
+      showToast(t('board.lobby.copied'));
+    } catch {
+      showToast(t('board.lobby.copyFailed'), { error: true });
     }
-  })
-  .catch(() => { /* socket path will populate it instead */ });
+  });
+  $('#btn-share')?.addEventListener('click', async () => {
+    const url = $('#join-url')?.dataset.copyText ?? $('#join-url')?.textContent ?? '';
+    const code = $('#join-code')?.textContent ?? '';
+    const shareData = {
+      title: t('app.title'),
+      text: t('board.lobby.shareText', { code }),
+      url,
+    };
+    if (navigator.share) {
+      try { await navigator.share(shareData); } catch { /* user cancelled */ }
+    } else {
+      try {
+        await navigator.clipboard.writeText(`${shareData.text} ${url}`);
+        showToast(t('board.lobby.copied'));
+      } catch {
+        showToast(t('board.lobby.copyFailed'), { error: true });
+      }
+    }
+  });
+} else {
+  $('#join-code')?.closest('.join-code-card')?.classList.add('hidden');
+  $('#share-row')?.classList.add('hidden');
+}
+
+// Socket-independent fallback (LAN mode only): make sure the lobby join QR is
+// visible even before the socket connects, straight from the REST API.
+if (hostInfo === null) {
+  fetch(new URL('../api/join-url', document.baseURI).href)
+    .then((r) => (r.ok ? r.json() : null))
+    .then((data) => {
+      if (data?.url && !$('#join-qr').src) {
+        setQrImg($('#join-qr'), data.url);
+        $('#join-url').textContent = data.url;
+      }
+    })
+    .catch(() => { /* socket path will populate it instead */ });
+}
 
 
 // ---------------------------------------------------------------- lobby view
@@ -138,9 +198,16 @@ function renderLobby(state) {
   $('#game-view').classList.add('hidden');
   $('#phase-title').textContent = t('board.phase.LOBBY.title');
   $('#phase-sub').textContent = state.joinUrl;
-  // Prominent, always-rendered join QR (server-rendered PNG via /api/qr.png).
-  $('#join-qr').src = qrImageUrl(state.joinUrl);
+  // Prominent, always-rendered join QR (rendered client-side, no server).
+  setQrImg($('#join-qr'), state.joinUrl);
   $('#join-url').textContent = state.joinUrl;
+  $('#join-url').dataset.copyText = state.joinUrl;
+  // Online mode: show the short game code + copy/share affordances.
+  const codeEl = $('#join-code');
+  if (codeEl && hostInfo) {
+    codeEl.textContent = state.gameId ?? '';
+    $('#share-row')?.classList.remove('hidden');
+  }
 
   const count = state.lobby.length;
   const canStart = count >= state.minPlayers && count <= state.maxPlayers;
@@ -351,7 +418,7 @@ function renderLiberalBoard(state) {
   // Draw-3 QR flow: during LEGISLATIVE_PRESIDENT before the president drew.
   const holder = $('#draw-qr');
   if (state.drawTokenUrl) {
-    holder.querySelector('img').src = qrImageUrl(state.drawTokenUrl);
+    setQrImg(holder.querySelector('img'), state.drawTokenUrl);
     holder.classList.remove('hidden');
   } else {
     holder.classList.add('hidden');
@@ -424,7 +491,7 @@ function renderSeats(state) {
       plaque.className = 'plaque-img president';
       plaque.title = t('board.plaque.presidentTitle');
       const img = document.createElement('img');
-      img.src = '/assets/plaque_president.png';
+      img.src = '../assets/plaque_president.png';
       img.alt = t('board.plaque.presidentAlt');
       img.draggable = false;
       plaque.appendChild(img);
@@ -512,7 +579,7 @@ function plaqueImg(kind, text) {
     const el = document.createElement('span');
     el.className = 'plaque-img chancellor';
     const img = document.createElement('img');
-    img.src = '/assets/plaque_chancellor.png';
+    img.src = '../assets/plaque_chancellor.png';
     img.alt = t('board.plaque.chancellorAlt');
     img.draggable = false;
     el.appendChild(img);

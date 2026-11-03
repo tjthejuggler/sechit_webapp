@@ -1,9 +1,15 @@
-# Secret Hitler — LAN Web App
+# Secret Hitler — LAN & Online Web App
 
 A self-hosted digital replacement for the physical **Secret Hitler** game. A
-Node.js server is the authoritative game state; a **central board page** shows
-the table on a big screen, and every player uses their **phone** as their
-private hand. Everything runs over your local WiFi — no internet required.
+**central board page** shows the table on a big screen, and every player uses
+their **phone** as their private hand. Two modes, same code and same feel:
+
+- **LAN mode** — a local Node.js server is the authoritative host over your
+  WiFi (no internet required), or
+- **Online mode** — a fully static deployment (GitHub Pages) where the board
+  page itself becomes the game host and phones connect **peer-to-peer** via
+  PeerJS/WebRTC. Anyone can start their own independent game instance; each
+  game gets a unique code, join URL, QR code and share button.
 
 ```
 Big screen (computer)             Phones (same WiFi)
@@ -28,9 +34,54 @@ Manual alternative:
 
 ```bash
 npm install
-npm start          # serves on PORT 3000 by default
+npm run build:vendor  # one-time: vendor peerjs/qrcode/jsQR bundles
+npm start             # serves on PORT 3000 by default
 # then open http://localhost:3000/board
 ```
+
+## Online mode — GitHub Pages + PeerJS (2026-11-03)
+
+The same app also runs as a **fully static site** with no backend at all:
+
+- **Landing page (`/`)** — "Start a New Game" mints a random 6-char game code
+  (Crockford-style base32, no confusing chars) and opens `board/?host=<code>`;
+  a join-by-code form routes to `play/?g=<code>`.
+- **Browser-host architecture** — the board page imports the same isomorphic
+  engine (`server/engine/*`, `server/session.js`, `server/room.js`) directly,
+  instantiates `GameSession` + `GameRoom` locally, and acts as the
+  authoritative host. Phones connect **P2P via PeerJS** (WebRTC
+  DataChannels; the board claims the peer id `sechit-webapp-v1-<code>`).
+  WebRTC ICE host candidates mean **same-WiFi peers connect directly over
+  the LAN** — as fast and responsive as the Node server mode; remote players
+  connect P2P over the internet.
+- **Mode auto-detection** — clients probe `/socket.io/socket.io.js`: if it
+  answers, they use the LAN server; on GitHub Pages it 404s and they switch
+  to PeerJS. One deployment serves both.
+- **Share & rejoin** — each game has a unique join URL (`play/?g=<code>`)
+  rendered as a QR code **client-side** (no server QR endpoint), plus Copy
+  Link and Share buttons. Player tokens live in `localStorage` per game code
+  (`sechit.session.token.<CODE>`), so refreshing or reopening the tab
+  re-attaches to the same seat; the board's rejoin picker lets a player who
+  lost their token reclaim their seat by name.
+- **Host resume** — the browser host persists a full `GameSession.snapshot()`
+  to `localStorage` on every state change (`sechit.host.<code>`); a reload
+  rebuilds the exact game via `GameSession.fromSnapshot()` — including
+  mid-vote ballots, enacted boards and seat tokens
+  (`tests/host-resume.test.js` guarantees the roundtrip).
+- **Independent instances** — every game has its own code, peer id, token
+  namespace and snapshot key, so any number of games run in parallel.
+
+Deployment (GitHub Pages project page):
+
+1. Push to `main`; `.github/workflows/deploy.yml` runs `npm ci` +
+   `npm run build:vendor`, assembles a `site/` artifact (`public/` +
+   `server/` engine sources + `.nojekyll`), and publishes it.
+2. Enable **Pages, via GitHub Actions** in the repo settings once.
+
+`npm run build:vendor` (`scripts/build-vendor.mjs`) copies `peerjs.min.js`
+and `jsQR.js` from `node_modules` and bundles the CommonJS `qrcode` browser
+entry into an IIFE (`public/vendor/qrcode.min.js`) with esbuild. The LAN
+launcher runs it automatically when `public/vendor/` is missing.
 
 ## How players join
 
@@ -260,7 +311,7 @@ fallback that fetches `/api/join-url` and renders `/api/qr.png` directly.
 ## Testing
 
 ```bash
-npm test            # unit + bot tests (166 tests, incl. i18n completeness)
+npm test            # unit + bot tests (180 tests, incl. i18n + host-resume)
 npm run test:unit   # engine unit tests (node:test)
 npm run test:bots   # socket.io bots playing complete random games, 5–10p
 npm run test:full   # bots with BOT_GAMES_PER_COUNT=10
