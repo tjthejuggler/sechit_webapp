@@ -55,6 +55,29 @@ export const DICT = {
     'board.btn.again': 'Play Again',
     'play.btn.continue': 'Continue',
 
+    // play — bottom tab bar
+    'play.tab.action': 'Action',
+    'play.tab.board': 'Board',
+    'play.tab.history': 'History',
+
+    // play — board page
+    'play.page.board.title': 'Board',
+    'play.page.board.government': 'Government',
+    'play.page.board.president': 'President',
+    'play.page.board.chancellor': 'Chancellor',
+    'play.page.board.policies': 'Policies Enacted',
+    'play.page.board.tracker': 'Failed Governments',
+    'play.page.board.piles': 'Card Piles',
+    'play.page.board.drawPile': 'Draw pile',
+    'play.page.board.discardPile': 'Discard pile',
+    'play.page.board.cards': '{n} cards',
+
+    // play — history page
+    'play.page.history.title': 'History',
+    'play.page.history.sub': 'The previous turn',
+    'play.page.history.empty': 'Nothing has happened yet.',
+    'play.page.history.vote': 'Vote: <b>Ja {ja}</b> – <b>{nein} Nein</b> — {outcome}',
+
     // board — lobby
     'board.lobby.scanToJoin': 'Scan to join · or open',
     'board.lobby.count': '{n} player{s} — need {min} to {max}',
@@ -384,6 +407,29 @@ export const DICT = {
     'board.btn.reset': 'Yeni Oyun',
     'board.btn.again': 'Tekrar Oyna',
     'play.btn.continue': 'Devam',
+
+    // play — bottom tab bar
+    'play.tab.action': 'Eylem',
+    'play.tab.board': 'Tahta',
+    'play.tab.history': 'Geçmiş',
+
+    // play — board page
+    'play.page.board.title': 'Tahta',
+    'play.page.board.government': 'Hükümet',
+    'play.page.board.president': 'Başkan',
+    'play.page.board.chancellor': 'Şansölye',
+    'play.page.board.policies': 'Yürürlükteki Politikalar',
+    'play.page.board.tracker': 'Başarısız Hükümetler',
+    'play.page.board.piles': 'Desteler',
+    'play.page.board.drawPile': 'Çekme destesi',
+    'play.page.board.discardPile': 'Atma destesi',
+    'play.page.board.cards': '{n} kart',
+
+    // play — history page
+    'play.page.history.title': 'Geçmiş',
+    'play.page.history.sub': 'Önceki tur',
+    'play.page.history.empty': 'Henüz bir şey olmadı.',
+    'play.page.history.vote': 'Oylama: <b>Ja {ja}</b> – <b>{nein} Nein</b> — {outcome}',
 
     // board — lobby
     'board.lobby.scanToJoin': 'Katılmak için okut · ya da aç',

@@ -20,6 +20,7 @@
       <div id="phase-chip"></div>
     </header>
 
+    <div id="page-action" class="page">
     <!-- ============================================================ JOIN -->
     <section id="screen-join" class="screen">
       <img class="join-logo" src="/assets/logo_transparent.png" alt="Secret Hitler" data-localizable />
@@ -182,7 +183,94 @@
         <p class="muted center small" data-i18n="play.over.again">Another game? The board operator starts a new lobby.</p>
       </div>
     </section>
+    </div>
+
+    <!-- ================================================== BOARD (tab 2) -->
+    <section id="page-board" class="page screen hidden">
+      <h2 class="screen-title" data-i18n="play.page.board.title">Board</h2>
+
+      <div class="info-card">
+        <h3 data-i18n="play.page.board.government">Government</h3>
+        <div class="gov-row">
+          <div class="gov-plaque">
+            <img src="/assets/plaque_president.png" alt="" draggable="false" />
+            <div>
+              <span class="gov-role" data-i18n="play.page.board.president">President</span>
+              <span class="gov-name" id="board-pres-name">—</span>
+            </div>
+          </div>
+          <div class="gov-plaque">
+            <img src="/assets/plaque_chancellor.png" alt="" draggable="false" />
+            <div>
+              <span class="gov-role" data-i18n="play.page.board.chancellor">Chancellor</span>
+              <span class="gov-name" id="board-chanc-name">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <h3 data-i18n="play.page.board.policies">Policies</h3>
+        <div class="board-track liberal">
+          <img src="/assets/seal_liberal.png" alt="" draggable="false" />
+          <div class="track-slots" id="board-lib-slots"></div>
+          <span class="board-count" id="board-lib-count">0/5</span>
+        </div>
+        <div class="board-track fascist">
+          <img src="/assets/seal_fascist.png" alt="" draggable="false" />
+          <div class="track-slots" id="board-fasc-slots"></div>
+          <span class="board-count" id="board-fasc-count">0/6</span>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <h3 data-i18n="play.page.board.tracker">Failed Governments</h3>
+        <div class="tracker-markers" id="board-tracker"></div>
+      </div>
+
+      <div class="info-card">
+        <h3 data-i18n="play.page.board.piles">Card Piles</h3>
+        <div class="piles-row">
+          <div class="pile-box">
+            <img src="/assets/pile_draw.png" alt="" draggable="false" />
+            <span class="pile-label" data-i18n="play.page.board.drawPile">Draw pile</span>
+            <span class="board-count" id="board-draw-count">0</span>
+          </div>
+          <div class="pile-box">
+            <img src="/assets/pile_discard.png" alt="" draggable="false" />
+            <span class="pile-label" data-i18n="play.page.board.discardPile">Discard pile</span>
+            <span class="board-count" id="board-discard-count">0</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================ HISTORY (tab 3) -->
+    <section id="page-history" class="page screen hidden">
+      <h2 class="screen-title" data-i18n="play.page.history.title">History</h2>
+      <p class="muted small center" data-i18n="play.page.history.sub">The previous turn</p>
+      <div id="history-turn"></div>
+    </section>
   </main>
+
+  <!-- Bottom tab bar: Action (main flow) / Board / History. Hidden until a
+       game is running. The Action tab carries a badge dot whenever the
+       player must do something (vote, nominate, enact, use a power…). -->
+  <nav id="tab-bar" class="hidden">
+    <button id="tab-action" type="button" data-tab="action">
+      <span class="tab-icon">&#9876;&#65038;</span>
+      <span class="tab-label" data-i18n="play.tab.action">Action</span>
+      <span id="tab-action-badge" class="badge-dot hidden"></span>
+    </button>
+    <button id="tab-board" type="button" data-tab="board">
+      <span class="tab-icon">&#127963;&#65038;</span>
+      <span class="tab-label" data-i18n="play.tab.board">Board</span>
+    </button>
+    <button id="tab-history" type="button" data-tab="history">
+      <span class="tab-icon">&#128220;</span>
+      <span class="tab-label" data-i18n="play.tab.history">History</span>
+    </button>
+  </nav>
 
   <!-- Hold-to-reveal overlay: EMPTY until pressed — art is injected only at
        pointerdown and wiped on release, so nothing about role/team is ever

@@ -23,8 +23,12 @@ import {
   saveToken,
 } from '../shared/shared.js';
 import {
-  t, getLang, setLang, onChange, applyI18n, createLangToggle, errorText,
-} from '../shared/i18n.js';
+   t, getLang, setLang, onChange, applyI18n, createLangToggle, errorText,
+ } from '../shared/i18n.js';
+import {
+  initTabs, setTabBarVisible, renderTabs, renderBoardPage, renderHistoryPage,
+  setPage, currentPage, needsAttention,
+} from './tabs.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -107,6 +111,12 @@ onChange(() => {
   if (you) render(you);
 });
 
+// A new attention badge is easy to miss while the player browses Board or
+// History — bounce them back to the Action tab the moment it is THEIR turn.
+function snapToActionWhenNeeded(state) {
+  if (currentPage() !== 'action' && needsAttention(state, you)) setPage('action');
+}
+
 // --------------------------------------------- URL params (?p= / ?d=)
 
 // ?p=<token> binds this tab to a seat WITHOUT the join form (dev players:
@@ -165,8 +175,14 @@ applyI18n();
 
 // ------------------------------------------------------------------ router
 
+// Tab bar (Action / Board / History) boots hidden; it appears once a game is
+// running. The Action tab is the default and the only one that auto-opens.
+initTabs();
+
 function show(screenId) {
-  document.querySelectorAll('.screen').forEach((s) => s.classList.add('hidden'));
+  // Scope to the Action page's screens: the Board/History pages are their
+  // own top-level pages toggled by setPage(), never by this router.
+  document.querySelectorAll('#page-action .screen').forEach((s) => s.classList.add('hidden'));
   if (screenId) $(screenId).classList.remove('hidden');
 }
 
@@ -175,9 +191,17 @@ function render(state) {
   renderPhaseChip(state);
 
   if (state.phase === 'LOBBY') {
+    setTabBarVisible(false);
     renderLobby();
     return;
   }
+
+  // Secondary pages always track live state, whichever tab is on top.
+  setTabBarVisible(true);
+  renderTabs(state, you);
+  renderBoardPage(state);
+  renderHistoryPage(state);
+  snapToActionWhenNeeded(state);
 
   if (state.phase === 'GAME_OVER') {
     renderGameOver(state);
