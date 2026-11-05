@@ -39,9 +39,22 @@ export function detectMode() {
 // ------------------------------------------------------------------ sockets
 
 // Minimal event socket both transports are normalized into.
+//
+// Replay semantics: server-push events in REPLAY_EVENTS ('state', 'hello')
+// are "latest value" events — a room may legitimately emit the initial state
+// BEFORE the UI subscribes (the browser host adds its loopback board client
+// synchronously inside startHost(), long before board.js reaches its
+// socket.on('state') line — the LAN/Socket.IO path never hit this because
+// its events always arrive asynchronously). NetSocket keeps the most recent
+// payload per replayable event and delivers it to the FIRST subscriber
+// immediately, so no initial state is ever lost to subscription timing.
+const REPLAY_EVENTS = new Set(['state', 'hello']);
+
 export class NetSocket {
   constructor() {
     this.handlers = new Map();
+    this.latest = new Map(); // replayable event -> last payload
+    this.replayed = new Set(); // events already replayed to a subscriber
     this._nextId = 1;
     this._pending = new Map(); // req id -> {resolve, reject, timer}
     this.defaultTimeoutMs = 8000;
@@ -49,11 +62,18 @@ export class NetSocket {
 
   on(event, cb) {
     if (!this.handlers.has(event)) this.handlers.set(event, []);
-    this.handlers.get(event).push(cb);
+    const subs = this.handlers.get(event);
+    subs.push(cb);
+    // First subscriber to a replayable event gets the retained payload.
+    if (REPLAY_EVENTS.has(event) && this.latest.has(event) && !this.replayed.has(event)) {
+      this.replayed.add(event);
+      cb(this.latest.get(event));
+    }
     return this;
   }
 
   fire(event, payload) {
+    if (REPLAY_EVENTS.has(event)) this.latest.set(event, payload);
     for (const cb of this.handlers.get(event) ?? []) cb(payload);
   }
 
