@@ -96,6 +96,38 @@ and `jsQR.js` from `node_modules` and bundles the CommonJS `qrcode` browser
 entry into an IIFE (`public/vendor/qrcode.min.js`) with esbuild. The LAN
 launcher runs it automatically when `public/vendor/` is missing.
 
+### Online gameplay simulator (2026-11-05)
+
+`scripts/simulate-online.mjs` is the online equivalent of the LAN dev mode +
+bot tests — it plays COMPLETE games for you so you never have to manually
+sit through a game as every player:
+
+```bash
+npm i   # puppeteer (devDependency) + engine deps
+npm run sim:online -- 7              # 7 players, 1 complete game
+npm run sim:online -- 5 --games 3    # 5 players, 3 complete games
+# against the DEPLOYED site:
+npm run sim:online -- 9 --url https://<user>.github.io/<repo>/board/
+```
+
+How it works: the board page accepts a `?bots=N&games=G` test hook
+([`board/bots.js`](board/bots.js), dynamically imported only when the param
+is present — normal players never download it). The hook spawns N in-page
+virtual phones that speak the exact same `handlePlay` protocol real PeerJS
+phones trigger, inside the page's REAL hosted `GameSession` + `GameRoom`,
+playing complete random games (elections, legislative chain, veto, all
+executive powers + the investigation ack gate, chaos, reshuffles). The Node
+driver launches the page headless, waits for `window.__sim.done`, then pulls
+every game's public event log and re-verifies it offline with the same
+strict verifier the wire-level bot tests use ([`tests/bots/driver.js`](tests/bots/driver.js)):
+exactly one legal `GAME_OVER`, vote completeness, dead-player exclusion,
+complete legislative chains per government, and 17-tile policy conservation
+across every reshuffle. Exit code 0 = every game verified.
+
+Verified: complete games pass at 5/6/7/8/9/10 players (multiple games each,
+liberal AND fascist win paths exercised) both locally and against the live
+GitHub Pages deployment.
+
 ## How players join
 
 1. Computer and all phones must be on the **same WiFi network**.
