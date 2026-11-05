@@ -121,6 +121,25 @@ socket.on('state', (state) => {
 });
 socket.on('connect_error', (err) => showToast(t('board.toast.connFailed', { msg: err.message }), { error: true }));
 
+// Test hook (online simulator): board/?bots=N[&games=G] spawns N in-page
+// virtual phones through the REAL hosted GameRoom and plays complete games.
+// Dynamically imported ONLY when the param is present — normal players never
+// download this code. The Node driver (scripts/simulate-online.mjs) launches
+// this page headless, waits for window.__sim.done, and re-verifies every
+// game's public event log offline (tests/bots/driver.js verifyLogHistory).
+if (hostInfo && new URLSearchParams(location.search).has('bots')) {
+  const bp = new URLSearchParams(location.search);
+  const n = Math.min(10, Math.max(5, parseInt(bp.get('bots'), 10) || 5));
+  const games = Math.max(1, parseInt(bp.get('games'), 10) || 1);
+  import('./bots.js')
+    .then((m) => m.runBots(hostInfo, n, games))
+    .catch((err) => {
+      if (window.__sim) window.__sim.error = String(err?.message ?? err);
+      else console.error('[bots]', err);
+      showToast(`Simulator failed: ${err?.message ?? err}`, { error: true, ms: 10000 });
+    });
+}
+
 // Language switch: re-render everything from the latest state (live, no
 // reload) and refresh static chrome + localizable art.
 onChange(() => {

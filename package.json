@@ -13,7 +13,8 @@
     "test:unit": "node --test tests/*.test.js",
     "test:bots": "node --test tests/bots/*.test.js",
     "test:full": "BOT_GAMES_PER_COUNT=10 npm run test:bots",
-    "build:vendor": "node scripts/build-vendor.mjs"
+    "build:vendor": "node scripts/build-vendor.mjs",
+    "sim:online": "node scripts/simulate-online.mjs"
   },
   "dependencies": {
     "express": "^4.21.2",
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "esbuild": "^0.28.2",
+    "puppeteer": "^25.16.0",
     "socket.io-client": "^4.8.4"
   }
 }
