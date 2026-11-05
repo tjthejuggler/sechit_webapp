@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Curate canonical Secret Hitler assets into public/assets/ (subtask 5).
+"""Curate canonical Secret Hitler assets into assets/ (subtask 5).
 
 Reads ONLY from the sibling assets project (../sechit_webapp_assets, never
-modified) and writes canonical PNGs + manifest.json into public/assets/.
+modified) and writes canonical PNGs + manifest.json into assets/.
 
 Orientation findings (verified visually against the 300dpi page renders):
 - Card pages crop straight (party_liberal, roles, ballots, seals already upright
@@ -30,7 +30,7 @@ PAGES = SRC / "pages300"
 SCRATCH = SRC / "scratch"
 TR_SRC = SRC / "assets" / "tr"          # Turkish board art (boards/ + icons/)
 GEN_SRC = SRC / "assets_gen"            # generated art (TR logo raw)
-OUT = Path(__file__).resolve().parent.parent / "public" / "assets"
+OUT = Path(__file__).resolve().parent.parent / "assets"
 
 CW = Image.Transpose.ROTATE_270   # rotate 90deg clockwise
 CCW = Image.Transpose.ROTATE_90   # rotate 90deg counter-clockwise
@@ -224,7 +224,7 @@ def build_tr(assets: dict) -> None:
     assets["board_liberal_tr"] = tr_liberal_board("board_liberal_tr.png")
     assets["logo_transparent_tr"] = logo_transparent_tr("logo_transparent_tr.png")
 
-    # Localised variants map (consumed by public/shared/i18n.js asset swap).
+    # Localised variants map (consumed by shared/i18n.js asset swap).
     LANG_MAP = {
         "board_liberal": "board_liberal_tr",
         "board_fascist_5-6": "board_fascist_5-6_tr",
@@ -322,7 +322,7 @@ def build() -> dict:
         "geometry: identical seam trims as EN, and board_liberal_tr.png is "
         "resampled 0.4% horizontally onto the EN 4266x1515 canvas so overlay "
         "coordinates stay valid. Per-language overlay constants live in "
-        "public/board/board.js (BOARD_GEO).",
+        "board/board.js (BOARD_GEO).",
         "Assets WITHOUT a `lang` map (plaques, role/party cards, ballots, seals, "
         "pile art, executive-action icons) are language-neutral: EN art is shown "
         "for both languages.",

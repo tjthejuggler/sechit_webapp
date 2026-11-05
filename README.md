@@ -74,17 +74,22 @@ The same app also runs as a **fully static site** with no backend at all:
 - **Independent instances** — every game has its own code, peer id, token
   namespace and snapshot key, so any number of games run in parallel.
 
+Layout note (2026-11-05): the static site lives AT THE REPO ROOT —
+`index.html`, `404.html`, `board/`, `play/`, `join/`, `shared/`, `assets/`,
+`vendor/` and the `server/` engine modules are all top-level (`.nojekyll`
+keeps Jekyll away). This means the site works with GitHub Pages set to
+ EITHER deployment method — no repo setting changes required.
+
 Deployment (GitHub Pages project page):
 
-1. **Settings → Pages → Build and deployment → Source: “GitHub Actions”** —
-   do this FIRST. If Pages is left on “Deploy from a branch”, the raw repo is
-   served instead and Jekyll renders this README as the homepage (the exact
-   symptom: visiting the site shows documentation text instead of the game).
-2. Push to `main`; `.github/workflows/deploy.yml` runs `npm ci` +
-   `npm run build:vendor`, assembles a `site/` artifact (`public/` +
-   `server/` engine sources + `.nojekyll`), and publishes it.
-3. Open the Pages URL — it lands directly on the board lobby with a fresh
-   game code and join QR.
+1. Push to `main`. Two deployment paths both work:
+   - **GitHub Actions** (preferred): `.github/workflows/deploy.yml` runs
+     `npm ci` + `npm run build:vendor`, assembles a clean `site/` artifact,
+     and publishes it.
+   - **Deploy from a branch**: the repo root IS the site (committed vendor
+     bundles + `.nojekyll`), so Pages serves it directly.
+2. Open the Pages URL (`https://<user>.github.io/<repo>/`) — it lands
+   directly on the board lobby with a fresh game code and join QR.
 
 `npm run build:vendor` (`scripts/build-vendor.mjs`) copies `peerjs.min.js`
 and `jsQR.js` from `node_modules` and bundles the CommonJS `qrcode` browser

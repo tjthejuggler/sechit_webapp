@@ -15,7 +15,13 @@ import { withDevLog } from './devlog.js';
 import { baseUrl, detectLanIp } from './lan.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PUBLIC_DIR = path.join(__dirname, '..', 'public');
+// The static site lives AT the repo root (GitHub Pages branch deployments
+// serve the repo root, so the game pages, assets, vendor bundles and the
+// isomorphic server/ modules are all top-level). The LAN server serves the
+// same layout: explicit per-directory mounts below, never the whole root
+// (that would expose node_modules/tests/plans).
+const PUBLIC_DIR = path.join(__dirname, '..');
+const SITE_DIRS = ['board', 'play', 'shared', 'assets', 'vendor', 'join', 'server'];
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || '0.0.0.0';
 // DEV testing mode: DEV_PLAYERS=N (5–10) auto-seats N dev players (P1..PN) in
@@ -61,6 +67,8 @@ app.get('/play/', (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'play', 'ind
 // Join-by-code landing page (online mode's start/join screen; harmless here).
 app.get('/join', (_req, res) => res.redirect('/join/'));
 app.get('/join/', (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'join', 'index.html')));
+// The bare index.html (no redirect hop) — GitHub Pages parity.
+app.get('/index.html', (_req, res) => res.redirect('/board/'));
 
 // LAN URL for QR generation (prefer non-internal IPv4).
 app.get('/api/lan-url', (_req, res) => {
@@ -90,16 +98,17 @@ app.get('/api/dev-players', (_req, res) => {
   res.json({ devPlayers: session.devPlayers, players: session.devPlayerUrls() });
 });
 
-// The board page's online host imports the isomorphic engine/session/room
-// modules directly from server/ (public/board/host.js → ../../server/*), so
-// those sources must be servable in the browser here too.
-app.use('/server', express.static(path.join(__dirname), { index: false, maxAge: 0 }));
+// Mirror the GitHub Pages layout exactly: the site root IS the repo root, so
+// each site directory is mounted explicitly (board/, play/, shared/, assets/,
+// vendor/, join/, server/). Never mount the whole root — that would expose
+// node_modules/tests/plans. The board page's online host imports the
+// isomorphic engine/session/room from server/ (board/host.js → ../server/*),
+// so those sources must be servable in the browser here too.
+for (const dir of SITE_DIRS) {
+  app.use(`/${dir}`, express.static(path.join(PUBLIC_DIR, dir), { index: false, maxAge: 0 }));
+}
 
-// Static public/ first — includes public/vendor when `npm run build:vendor`
-// has run (start.sh and the Pages workflow both do).
-app.use(express.static(PUBLIC_DIR, { index: false, maxAge: 0 }));
-
-// Fallbacks for the vendor bundles when public/vendor was not built yet:
+// Fallbacks for the vendor bundles when vendor/ was not built yet:
 // serve the pure dist files straight from node_modules where possible.
 const VENDOR_MAP = {
   'peerjs.min.js': ['peerjs', 'dist', 'peerjs.min.js'],
@@ -113,7 +122,7 @@ for (const [name, rel] of Object.entries(VENDOR_MAP)) {
 }
 app.get('/vendor/qrcode.min.js', (_req, res) => {
   res.status(500).type('text/plain')
-    .send('Missing public/vendor/qrcode.min.js — run: npm run build:vendor');
+    .send('Missing vendor/qrcode.min.js — run: npm run build:vendor');
 });
 
 // ------------------------------------------------------------------- sockets

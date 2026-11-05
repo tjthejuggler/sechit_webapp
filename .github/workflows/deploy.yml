@@ -1,5 +1,11 @@
 name: Deploy to GitHub Pages
 
+# The site lives AT the repo root (index.html, board/, play/, shared/,
+# assets/, vendor/, join/, server/) so that BOTH deployment methods work:
+# the Actions workflow below AND a plain "deploy from branch" Pages setting.
+# The workflow is still preferred: it builds fresh vendor bundles and ships a
+# clean artifact.
+
 on:
   push:
     branches: [main]
@@ -36,10 +42,12 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p site
-          cp -r public/. site/
-          # The board page imports the isomorphic game engine/session/room
-          # straight from server/ — ship those modules with the site.
-          cp -r server site/server
+          # Site content (game pages, assets, vendor, and the isomorphic
+          # server/ modules the board host imports in the browser).
+          for d in board play shared assets vendor join server; do
+            cp -r "$d" site/
+          done
+          cp index.html 404.html site/
           # Jekyll would try to process the site; we ship plain static files.
           touch site/.nojekyll
 

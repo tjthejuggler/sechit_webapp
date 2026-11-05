@@ -1,4 +1,4 @@
-// Builds public/vendor/ browser bundles for the static (GitHub Pages) build:
+// Builds vendor/ browser bundles for the static (GitHub Pages) build:
 //   peerjs.min.js  — PeerJS client (from node_modules, pinned by package.json)
 //   jsQR.js        — QR camera scanning (from node_modules)
 //   qrcode.min.js  — QR code *rendering*: esbuild bundles the qrcode npm
@@ -6,14 +6,14 @@
 //                    IIFE exposing window.QRCode — fully self-hosted, no CDN.
 //
 // Run automatically by the GitHub Pages workflow; run manually after
-// `npm ci` / `npm install` when serving public/ statically.
+// `npm ci` / `npm install` when serving the repo-root site statically.
 import { cp, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
-const outDir = path.join(root, 'public', 'vendor');
+const outDir = path.join(root, 'vendor');
 const nm = (...p) => path.join(root, 'node_modules', ...p);
 
 await mkdir(outDir, { recursive: true });
@@ -38,4 +38,4 @@ await build({
   logLevel: 'info',
 });
 
-console.log('vendor bundles written to public/vendor/');
+console.log('vendor bundles written to vendor/');

@@ -5,18 +5,18 @@
 //  2. Every dictionary entry is a non-empty string in both languages.
 //  3. No unreplaced {param} placeholders after t() interpolation.
 //  4. Every TR board art variant declared in the i18n ASSET_LANG map exists
-//     on disk AND is listed in public/assets/manifest.json with a `lang` map,
+//     on disk AND is listed in assets/manifest.json with a `lang` map,
 //     with byte-identical dimensions to its EN twin (overlay coordinates and
 //     CSS aspect ratios stay valid for both languages).
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { describe, it } from 'node:test';
 
-const i18nUrl = new URL('../public/shared/i18n.js', import.meta.url);
+const i18nUrl = new URL('../shared/i18n.js', import.meta.url);
 const { DICT, LANGS, ASSET_LANG, t, errorText, localizedAssetPath } = await import(i18nUrl.href);
 
 const manifest = JSON.parse(
-  await readFile(new URL('../public/assets/manifest.json', import.meta.url), 'utf8'),
+  await readFile(new URL('../assets/manifest.json', import.meta.url), 'utf8'),
 );
 
 describe('i18n dictionaries', () => {
@@ -98,7 +98,7 @@ describe('localized art assets', () => {
         assert.equal(trMeta.width, enMeta.width, `${trName} width != ${base} width`);
         assert.equal(trMeta.height, enMeta.height, `${trName} height != ${base} height`);
       }
-      const png = await readFile(new URL(`../public/assets/${trMeta.file}`, import.meta.url));
+      const png = await readFile(new URL(`../assets/${trMeta.file}`, import.meta.url));
       // PNG signature check (8-byte header) — file exists and is a real PNG.
       assert.deepEqual([...png.slice(0, 8)], [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
     }

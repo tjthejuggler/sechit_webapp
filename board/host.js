@@ -10,8 +10,14 @@
 // Phones on the SAME WiFi connect directly over the LAN (WebRTC host
 // candidates) — as fast as the old socket server; remote players traverse
 // the internet.
-import { GameSession } from '../../server/session.js';
-import { GameRoom } from '../../server/room.js';
+// NOTE: exactly ONE ../ — host.js is served at <site>/board/host.js, so
+// ../server/ resolves to <site>/server/ in every deployment: GitHub Pages
+// project sub-paths (/repo/board/ → /repo/server/), domain roots (/board/ →
+// /server/) and the LAN server (which serves server/ at /server). The
+// previous ../../ climbed OUT of a project sub-path and 404'd, killing the
+// whole module graph (symptom: static HTML shell with an empty white QR).
+import { GameSession } from '../server/session.js';
+import { GameRoom } from '../server/room.js';
 import { NetSocket, peerIdForGame, generateGameCode } from '../shared/net.js';
 
 const SNAPSHOT_PREFIX = 'sechit.host.';

@@ -117,9 +117,9 @@ fi
 
 # Vendor bundles (peerjs/qrcode/jsQR in public/vendor) — the LAN board page
 # loads them for client-side QR rendering; build once, rebuild if missing.
-if [ ! -f "$ROOT_DIR/public/vendor/peerjs.min.js" ] \
-  || [ ! -f "$ROOT_DIR/public/vendor/qrcode.min.js" ] \
-  || [ ! -f "$ROOT_DIR/public/vendor/jsQR.js" ]; then
+if [ ! -f "$ROOT_DIR/vendor/peerjs.min.js" ] \
+  || [ ! -f "$ROOT_DIR/vendor/qrcode.min.js" ] \
+  || [ ! -f "$ROOT_DIR/vendor/jsQR.js" ]; then
   echo "[start] Vendor bundles missing — running npm run build:vendor..."
   (cd "$ROOT_DIR" && npm run build:vendor)
 fi
