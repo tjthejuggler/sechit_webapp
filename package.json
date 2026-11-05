@@ -14,7 +14,8 @@
     "test:bots": "node --test tests/bots/*.test.js",
     "test:full": "BOT_GAMES_PER_COUNT=10 npm run test:bots",
     "build:vendor": "node scripts/build-vendor.mjs",
-    "sim:online": "node scripts/simulate-online.mjs"
+    "sim:online": "node scripts/simulate-online.mjs",
+    "play:online": "node scripts/open-online.mjs"
   },
   "dependencies": {
     "express": "^4.21.2",

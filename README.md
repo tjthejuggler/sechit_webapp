@@ -128,6 +128,24 @@ Verified: complete games pass at 5/6/7/8/9/10 players (multiple games each,
 liberal AND fascist win paths exercised) both locally and against the live
 GitHub Pages deployment.
 
+### Manual online playtest launcher (2026-11-05)
+
+To play a game YOURSELF across browser tabs (every action by hand, no bots):
+
+```bash
+npm run play:online -- 7          # board tab + 7 player tabs on the live site
+npm run play:online -- 5 --url http://localhost:8788   # against a local build
+```
+
+[`scripts/open-online.mjs`](scripts/open-online.mjs) opens the live board
+tab with a fresh game code (`?host=<code>` — the QR, code and share buttons
+are live there), waits for the host to claim its peer id, then opens one tab
+per player on the same game (`play/?g=<code>&name=P1..PN` — the `?name=`
+param prefills each tab's join form; you still tap "Take a Seat" and perform
+every in-game action yourself). Real phones can join the same game by
+scanning the board QR or typing the printed code. Keep the BOARD tab open —
+it is the game host.
+
 ## How players join
 
 1. Computer and all phones must be on the **same WiFi network**.

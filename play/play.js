@@ -185,6 +185,16 @@ function identifyAs(token) {
   }
   if (draw) pendingUrlAction = { kind: 'draw', token: draw };
   if (draw) history.replaceState(null, '', location.pathname); // one-shot
+  // Manual-testing convenience: ?name=X prefills the join form (the player
+  // still taps "Take a Seat" — and performs every in-game action themselves).
+  const preName = params.get('name');
+  if (preName) {
+    const input = document.querySelector('#join-name');
+    if (input && !input.value) {
+      input.value = preName.slice(0, 20);
+      history.replaceState(null, '', location.pathname);
+    }
+  }
 })();
 
 function firePendingUrlAction(state) {
