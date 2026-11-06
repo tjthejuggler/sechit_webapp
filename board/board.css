@@ -602,3 +602,11 @@ footer { margin-top: auto; }
   font-family: var(--mono, ui-monospace, monospace);
 }
 #share-row { display: flex; gap: 0.5rem; justify-content: center; margin-top: 0.7rem; }
+
+/* House-rule row (5–6p first fascist power: investigate vs peek). */
+.invest-row {
+  display: flex; align-items: center; gap: 0.5rem;
+  margin-top: 0.6rem; font-size: 0.85rem; opacity: 0.9;
+  cursor: pointer; user-select: none;
+}
+.invest-row input { width: 1.05rem; height: 1.05rem; accent-color: #c9a227; cursor: pointer; }

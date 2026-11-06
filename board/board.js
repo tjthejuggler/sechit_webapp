@@ -346,6 +346,11 @@ function swapLobbySeats(state, fromId, toId) {
 
 function render(state) {
   if (state.phase === 'LOBBY') {
+    // Reset/Play-again path: dismiss the win splash IMMEDIATELY — the lobby
+    // must be front-and-center the moment the state says LOBBY (the splash
+    // used to linger here because only renderWin() ever hid it, and render()
+    // returned early on LOBBY).
+    $('#win-splash').classList.add('hidden');
     renderLobby(state);
     return;
   }
@@ -816,6 +821,9 @@ function renderWin(state) {
 // ------------------------------------------------------------------ controls
 
 $('#btn-start').addEventListener('click', () => {
+  // Online host: sync the house-rule checkbox into the session right before
+  // the engine is created (LAN mode has no hostInfo — the server flag rules).
+  if (hostInfo) hostInfo.session.investigateFirstPower = window.__sechitInvestFirst?.() ?? true;
   socket.timeout(8000).emit('board:start', {}, (err, res) => {
     if (err || !res?.ok) showToast(errorText(res?.code, t('board.toast.cannotStart')), { error: true });
   });
@@ -835,6 +843,10 @@ $('#btn-reset').addEventListener('click', () => {
 });
 
 $('#btn-again').addEventListener('click', () => {
+  // Optimistic dismiss: the lobby replaces the splash the instant the user
+  // acts (the reset broadcast confirms within ~instant; if it somehow fails
+  // the toast tells them and the state stays GAME_OVER).
+  $('#win-splash').classList.add('hidden');
   socket.timeout(8000).emit('board:reset', {}, (err, res) => {
     if (err || !res?.ok) showToast(errorText(res?.code, t('board.toast.cannotReset')), { error: true });
   });

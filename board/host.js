@@ -87,11 +87,27 @@ export async function startHost() {
   // a new game gets a brand-new random code + QR, by design.
   if (!code) code = generateGameCode();
 
+  // House rule checkbox (board lobby): default ON — in 5–6p games the FIRST
+  // fascist power is an INVESTIGATION instead of the official Policy Peek.
+  // Persisted per game code; applies to startGame() and any later reset.
+  const ruleKey = `sechit.investFirst.${code}`;
+  window.__sechitInvestFirst = () => {
+    const cb = document.querySelector('#invest-first-power');
+    const v = cb ? cb.checked : true;
+    try { localStorage.setItem(ruleKey, v ? '1' : '0'); } catch { /* private mode */ }
+    return v;
+  };
+  try {
+    const saved = localStorage.getItem(ruleKey);
+    const cb = document.querySelector('#invest-first-power');
+    if (cb && saved !== null) cb.checked = saved === '1';
+  } catch { /* private mode */ }
+
   const snap = loadSnapshot(code);
   const resumable = !!snap?.engine?.state
     && (snap.engine.state.phase === 'LOBBY' || RESUMABLE_PHASES.has(snap.engine.state.phase));
 
-  const opts = { baseUrl: siteBase(), gameId: code };
+  const opts = { baseUrl: siteBase(), gameId: code, investigateFirstPower: window.__sechitInvestFirst() };
   const session = snap
     ? GameSession.fromSnapshot(snap, opts)
     : new GameSession(opts);
