@@ -400,14 +400,16 @@ function renderFlash(state) {
 function renderBoards(state) {
   // Pick the fascist art for this player count (track + summary halves).
   // Only touch the src when it changes — reassigning reloads the image.
+  // The src must stay RELATIVE (../assets/…): an absolute /assets/… breaks
+  // under the GitHub Pages project sub-path (404 → invisible fascist board).
   // localizedAssetPath() maps to the TR variant while the toggle is on TR.
   const key = fascistBoardKey(state.playerCount ?? 7);
   const trackArt = $('#fasc-track-art');
   const sumArt = $('#fasc-sum-art');
-  const trackSrc = localizedAssetPath(`/assets/board_fascist_${key}.png`);
-  const sumSrc = localizedAssetPath(`/assets/board_fascist_summary_${key}.png`);
-  if (!trackArt.src.endsWith(trackSrc)) trackArt.src = trackSrc;
-  if (!sumArt.src.endsWith(sumSrc)) sumArt.src = sumSrc;
+  const trackSrc = localizedAssetPath(`../assets/board_fascist_${key}.png`);
+  const sumSrc = localizedAssetPath(`../assets/board_fascist_summary_${key}.png`);
+  if (!trackArt.src.endsWith(trackSrc.replace(/^\.\.\//, ''))) trackArt.src = trackSrc;
+  if (!sumArt.src.endsWith(sumSrc.replace(/^\.\.\//, ''))) sumArt.src = sumSrc;
 
   renderLiberalBoard(state);
   renderFascistBoard(state);

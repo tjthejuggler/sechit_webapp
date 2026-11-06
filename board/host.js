@@ -63,7 +63,11 @@ class LoopbackBoardSocket extends NetSocket {
   }
 
   _call(event, payload, ack, _ms) {
-    ack(this.room.handleBoard(this.clientRef, event, payload));
+    // socket.io ack shape: (err, res) — err null on success. board.js checks
+    // `if (err || !res?.ok)`; single-arg delivery made err truthy with the
+    // successful result, so board:start/board:beginNomination showed
+    // "could not start" toasts while the game actually started.
+    ack(null, this.room.handleBoard(this.clientRef, event, payload));
   }
 }
 

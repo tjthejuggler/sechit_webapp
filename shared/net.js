@@ -56,7 +56,7 @@ export class NetSocket {
     this.latest = new Map(); // replayable event -> last payload
     this.replayed = new Set(); // events already replayed to a subscriber
     this._nextId = 1;
-    this._pending = new Map(); // req id -> {resolve, reject, timer}
+    this._pending = new Map(); // req id -> {cb, timer}
     this.defaultTimeoutMs = 8000;
   }
 
@@ -96,18 +96,24 @@ export class NetSocket {
   }
 
   // Resolve an incoming response to a prior request.
+  // CRITICAL: socket.io's ack callback signature is (err, res) — err null on
+  // success. Callers across both clients destructure exactly that shape
+  // (sendAction/socketEmit check `if (err) reject`). NetSocket must mirror
+  // it: cb(null, res). Calling cb(res) alone made err TRUTHY with the
+  // successful result — every join/action/board:* was reported as 'Server
+  // did not respond' while the server-side effect had actually succeeded.
   _resolve(id, res) {
     const p = this._pending.get(id);
     if (!p) return;
     clearTimeout(p.timer);
     this._pending.delete(id);
-    p.resolve(res);
+    p.cb(null, res);
   }
 
   _rejectAll(code, message) {
     for (const [, p] of this._pending) {
       clearTimeout(p.timer);
-      p.reject({ code, message });
+      p.cb({ code, message });
     }
     this._pending.clear();
   }
@@ -222,7 +228,7 @@ class PeerSocket extends NetSocket {
       this._pending.delete(id);
       ack({ ok: false, code: 'TIMEOUT', message: 'Host did not respond.' });
     }, ms);
-    this._pending.set(id, { resolve: (res) => ack(res), timer });
+    this._pending.set(id, { cb: ack, timer });
     this.conn.send({ k: 'req', id, event, payload });
   }
 

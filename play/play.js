@@ -105,6 +105,7 @@ socket.on('connect_error', (err) => {
 
 socket.on('hello', (msg) => {
   if (msg.reconnectedAs) myId = msg.reconnectedAs;
+  if (msg.name) myName = msg.name;
 });
 
 socket.on('lobby', (msg) => {
@@ -278,7 +279,11 @@ function render(state) {
     return;
   }
 
-  $('#me-label').textContent = myName ?? you.you.id;
+  // myName can be null after a reattach whose hello lacked a name — resolve
+  // from the roster instead of flashing the raw player id.
+  $('#me-label').textContent = myName
+    ?? state.players?.find((p) => p.id === you.you.id)?.name
+    ?? you.you.id;
 
   // Vote reveal: show each resolved election once (before resuming the flow).
   // The result frame is often the ONLY broadcast after an election resolves
@@ -437,7 +442,9 @@ function renderSecretPage(state) {
 // player at the shh Secrets tab (the single place secrets can be revealed).
 function renderRoleReveal(state) {
   show('#screen-role');
-  $('#me-label').textContent = myName ?? you.you.id;
+  $('#me-label').textContent = myName
+    ?? state.players?.find((p) => p.id === you.you.id)?.name
+    ?? you.you.id;
   $('#role-hint').textContent = t('play.role.hint');
 }
 
