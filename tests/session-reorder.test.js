@@ -42,11 +42,28 @@ test('reorderLobby rejects partial, duplicate, unknown or extra ids', () => {
   assert.deepEqual(s.lobby.map((p) => p.id).slice(0, 3), [a, b, c]);
 });
 
-test('reorderLobby is refused once the game is running', () => {
+test('reorderLobby during ROLE_REVEAL remaps engine seats', () => {
   const s = makeSession();
-  const [a, b] = seat(s, 5).slice(0, 2);
+  const [a, b, ...rest] = seat(s, 5);
   s.startGame();
-  assert.throws(() => s.reorderLobby([b, a]), (e) => e.code === 'GAME_IN_PROGRESS');
+  assert.equal(s.engine.state.phase, 'ROLE_REVEAL');
+  const seatOf = (id) => s.engine.state.players.find((p) => p.id === id).seat;
+  const seatA = seatOf(a), seatB = seatOf(b);
+  s.reorderLobby([b, a, ...rest]);
+  // Lobby order swapped AND engine seats remapped to match (roles are bound
+  // to player ids — pre-nomination rearranging is purely social).
+  assert.equal(s.lobby[0].id, b);
+  assert.equal(seatOf(b), seatA);
+  assert.equal(seatOf(a), seatB);
+});
+
+test('reorderLobby is refused once nomination has begun', () => {
+  const s = makeSession();
+  const [a, b, ...rest] = seat(s, 5);
+  s.startGame();
+  s.beginNomination();
+  assert.notEqual(s.engine.state.phase, 'ROLE_REVEAL');
+  assert.throws(() => s.reorderLobby([b, a, ...rest]), (e) => e.code === 'GAME_IN_PROGRESS');
 });
 
 test('publicState lobby reflects the reordered arrangement', () => {

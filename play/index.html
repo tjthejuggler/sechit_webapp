@@ -7,7 +7,7 @@
   <link rel="icon" href="../assets/logo_transparent.png" />
   <!-- Absolute asset paths: the page is served at BOTH /play and /play/,
        and relative URLs would resolve against / (root) and 404. -->
-  <link rel="stylesheet" href="play.css?v=20261106a" />
+  <link rel="stylesheet" href="play.css?v=20261106b" />
 </head>
 <body>
   <main id="app">
@@ -92,7 +92,11 @@
         <p class="center muted" data-i18n-html="play.legisPres.discardNote">Discard <b>one</b> policy — the other two go to the chancellor.</p>
         <div id="discard-cards" class="policy-row"></div>
         <div id="discard-trash" class="trash-zone">
-          <img src="../assets/pile_discard.png" alt="" draggable="false" />
+          <!-- Unambiguous trash-can icon (inline SVG): the old discard-pile
+               art read as "another card stack", not "throw it away". -->
+          <svg class="trash-icon" viewBox="0 0 24 24" width="52" height="52" aria-hidden="true" draggable="false">
+            <path fill="currentColor" d="M9 3h6a1 1 0 0 1 1 1v1h4a1 1 0 1 1 0 2h-.1l-.9 12.1A2 2 0 0 1 17 21H7a2 2 0 0 1-2-1.9L4.1 7H4a1 1 0 1 1 0-2h4V4a1 1 0 0 1 1-1zm1 2h4V4h-4v1zM7.1 7l.9 12h8l.9-12H7.1zM10 9v8h1.5V9H10zm2.5 0v8H14V9h-1.5z"/>
+          </svg>
           <span data-i18n="play.card.discardZone">Discard</span>
         </div>
       </div>

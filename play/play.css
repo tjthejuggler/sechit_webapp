@@ -429,6 +429,12 @@ body {
   user-select: none;
 }
 .trash-zone img { width: 58px; height: auto; opacity: 0.9; }
+.trash-zone .trash-icon {
+  color: #f4ead2;
+  opacity: 0.95;
+  transition: transform 120ms ease, color 120ms ease;
+}
+.trash-zone.armed .trash-icon { color: #ff6b61; transform: scale(1.12); }
 .trash-zone.armed {
   transform: scale(1.1);
   border-color: #e2554d;

@@ -110,7 +110,13 @@ export class GameSession {
   // lobby. The lobby array order IS the seat order used by startGame(), so a
   // reorder here directly changes the seating circle. Only valid pre-game.
   reorderLobby(orderedIds) {
-    if (this.engine) this.#fail('GAME_IN_PROGRESS', 'A game is already running.');
+    // Seat rearranging stays available after startGame() but BEFORE the
+    // first nomination (ROLE_REVEAL): roles are bound to player ids, not
+    // seats, so remapping engine seats to the new order is purely social —
+    // the presidency hasn't rotated yet. Once nomination begins, seats lock.
+    if (this.engine && this.engine.state?.phase !== 'ROLE_REVEAL') {
+      this.#fail('GAME_IN_PROGRESS', 'A game is already running.');
+    }
     const ids = (Array.isArray(orderedIds) ? orderedIds : []).map(String);
     const current = new Set(this.lobby.map((p) => p.id));
     if (ids.length !== current.size
@@ -120,6 +126,12 @@ export class GameSession {
     }
     const byId = new Map(this.lobby.map((p) => [p.id, p]));
     this.lobby = ids.map((id) => byId.get(id));
+    if (this.engine) {
+      this.lobby.forEach((p, i) => {
+        const ep = this.engine.state.players.find((e) => e.id === p.id);
+        if (ep) ep.seat = i;
+      });
+    }
     this.#changed();
     return this.lobby.map((p) => p.id);
   }

@@ -359,12 +359,21 @@ function render(state) {
 
   $('#phase-title').textContent = t(`board.phase.${state.phase}.title`);
   $('#phase-sub').textContent = t(`board.phase.${state.phase}.sub`);
-  $('#btn-begin').classList.toggle('hidden', state.phase !== 'ROLE_REVEAL');
+  // ROLE_REVEAL = "seats locked in, roles dealt": the redundant Start Game
+  // button has no effect here (the game already started) — hide it and show
+  // Begin Nomination instead. Seats stay drag-rearrangeable (see the
+  // renderRevealRing call below) until the first nomination begins.
+  const preNomination = state.phase === 'ROLE_REVEAL';
+  $('#btn-start').classList.toggle('hidden', preNomination);
+  $('#btn-begin').classList.toggle('hidden', !preNomination);
 
   renderFlash(state);
   renderAnnounce(state);
   renderBoards(state);
-  renderSeats(state);
+  // ROLE_REVEAL: the drag-rearrange ring replaces the static seating ring
+  // (same geometry — the rearrange ring node is hosted inside #seating-ring).
+  if (preNomination) renderRevealRing(state);
+  else renderSeats(state);
   renderVotePanel(state);
   renderVeto(state);
   renderLog(state);
@@ -501,6 +510,99 @@ function powerLabel(power) {
 }
 
 // --------------------------------------------------------------- seating ring
+
+// ROLE_REVEAL seat rearranging: the lobby ring logic, fed by the ENGINE's
+// players (roles are already dealt and bound to player ids — rearranging is
+// purely about where people sit). Drag/tap-to-swap emits board:reorder with
+// the full id order; the session remaps engine seats while phase is still
+// ROLE_REVEAL and locks them at the first nomination.
+let pendingRevealPick = null;
+
+function clearRevealSelection() {
+  pendingRevealPick = null;
+  document.querySelectorAll('.lobby-seat.selected').forEach((el) => el.classList.remove('selected'));
+}
+
+function renderRevealRing(state) {
+  const ring = $('#lobby-ring');
+  // The game view is visible, not the lobby section — move the ring node
+  // into the game view so the same geometry/interactions serve both.
+  const host = $('#seating-ring');
+  if (ring.parentElement !== host) host.appendChild(ring);
+
+  for (const old of ring.querySelectorAll('.lobby-seat')) old.remove();
+  $('#lobby-rearrange-hint').textContent = t('board.lobby.rearrange');
+
+  const players = [...(state.players ?? [])].sort((a, b) => a.seat - b.seat);
+  const n = Math.max(players.length, 1);
+  players.forEach((p, i) => {
+    const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+    const radiusX = ring.clientWidth * 0.5 - 56;
+    const radiusY = ring.clientHeight * 0.5 - 28;
+    const x = ring.clientWidth / 2 + radiusX * Math.cos(angle);
+    const y = ring.clientHeight / 2 + radiusY * Math.sin(angle);
+
+    const seat = document.createElement('div');
+    seat.className = 'lobby-seat';
+    seat.style.left = `${x}px`;
+    seat.style.top = `${y}px`;
+    seat.dataset.playerId = p.id;
+    seat.draggable = true;
+
+    const name = document.createElement('span');
+    name.className = 'seat-name';
+    name.textContent = p.name;
+    seat.appendChild(name);
+
+    seat.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', p.id);
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    seat.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      seat.classList.add('drop-target');
+    });
+    seat.addEventListener('dragleave', () => seat.classList.remove('drop-target'));
+    seat.addEventListener('drop', (e) => {
+      e.preventDefault();
+      seat.classList.remove('drop-target');
+      clearRevealSelection();
+      const from = e.dataTransfer.getData('text/plain');
+      if (from && from !== p.id) swapRevealSeats(state, from, p.id);
+    });
+    seat.addEventListener('click', () => {
+      if (pendingRevealPick == null) {
+        pendingRevealPick = p.id;
+        seat.classList.add('selected');
+        return;
+      }
+      const from = pendingRevealPick;
+      clearRevealSelection();
+      if (from !== p.id) swapRevealSeats(state, from, p.id);
+    });
+
+    ring.appendChild(seat);
+  });
+}
+
+function swapRevealSeats(state, fromId, toId) {
+  const ids = [...(state.players ?? [])]
+    .sort((a, b) => a.seat - b.seat)
+    .map((p) => p.id);
+  const i = ids.indexOf(fromId);
+  const j = ids.indexOf(toId);
+  if (i < 0 || j < 0) return;
+  [ids[i], ids[j]] = [ids[j], ids[i]];
+  // Optimistic local swap (the reorder broadcast confirms instantly).
+  const bySeat = [...(state.players ?? [])].sort((a, b) => a.seat - b.seat);
+  const byId = new Map(bySeat.map((p) => [p.id, p]));
+  ids.forEach((id, seat) => { const p = byId.get(id); if (p) p.seat = seat; });
+  state.players = bySeat;
+  renderRevealRing(state);
+  socket.timeout(8000).emit('board:reorder', ids, (err, res) => {
+    if (err || !res?.ok) showToast(errorText(res?.code, t('board.toast.reorderFailed')), { error: true });
+  });
+}
 
 function renderSeats(state) {
   const ring = $('#seating-ring');
