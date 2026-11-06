@@ -199,6 +199,8 @@ export async function startHost() {
   }
 
   room.addClient(boardClient); // initial state push to the board UI
+  // Debug/test handle (read-only usage by automated checks; not a game API).
+  window.__sechitHostRef = { session, room, code };
   return { socket: boardSocket, session, room, code, peer, resumed: !!snap };
 }
 

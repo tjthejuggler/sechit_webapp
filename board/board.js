@@ -227,6 +227,16 @@ if (hostInfo === null) {
 function renderLobby(state) {
   $('#lobby-view').classList.remove('hidden');
   $('#game-view').classList.add('hidden');
+  // Return the rearrange ring to the lobby layout if a reveal-render moved
+  // it into the seating ring (Play Again → lobby).
+  const ring = $('#lobby-ring');
+  const lobbyWrap = $('#lobby-ring-wrap');
+  if (ring.parentElement !== lobbyWrap) {
+    lobbyWrap.appendChild(ring);
+    ring.classList.remove('reveal-host');
+    ring.querySelectorAll('.lobby-seat').forEach((el) => el.remove());
+    clearRevealSelection();
+  }
   $('#phase-title').textContent = t('board.phase.LOBBY.title');
   $('#phase-sub').textContent = state.joinUrl;
   // Prominent, always-rendered join QR (rendered client-side, no server).
@@ -525,10 +535,15 @@ function clearRevealSelection() {
 
 function renderRevealRing(state) {
   const ring = $('#lobby-ring');
-  // The game view is visible, not the lobby section — move the ring node
-  // into the game view so the same geometry/interactions serve both.
+  // Host the ring inside #seating-ring and make it FILL it: the seating ring
+  // keeps its own circle chrome; the lobby ring must not draw a second,
+  // smaller circle inside it (that double-circle mess). Leaving the game
+  // view restores the lobby layout anyway.
   const host = $('#seating-ring');
-  if (ring.parentElement !== host) host.appendChild(ring);
+  if (ring.parentElement !== host) {
+    host.appendChild(ring);
+    ring.classList.add('reveal-host');
+  }
 
   for (const old of ring.querySelectorAll('.lobby-seat')) old.remove();
   $('#lobby-rearrange-hint').textContent = t('board.lobby.rearrange');
