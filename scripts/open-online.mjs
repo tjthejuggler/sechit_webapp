@@ -111,87 +111,89 @@ candidates.push({ cmd: 'xdg-open', label: 'xdg-open' });
 
 // ------------------------------------------------------------- opener logic
 
-// PRIMARY opener: Firefox's DBus remote. A RUNNING Firefox owns the session
-// bus name org.mozilla.firefox.<base64url(profile path)> and exposes
-// org.mozilla.firefox.OpenURL(in ay url) at /org/mozilla/firefox/Remote.
-// (--new-tab against a mid-update install can exit 0 WITHOUT opening a tab;
-// the DBus call returns () on genuine delivery — user-verified.)
-function gdbusRun(args) {
-  return new Promise((resolve) => {
-    execFile('gdbus', args, { timeout: 10_000 }, (err, stdout, stderr) => {
-      resolve({ err, stdout: stdout ?? '', stderr: stderr ?? '' });
-    });
-  });
-}
-
-async function firefoxDBusService() {
-  const { err, stdout } = await gdbusRun(['call', '--session',
-    '--dest', 'org.freedesktop.DBus',
-    '--object-path', '/org/freedesktop/DBus',
-    '--method', 'org.freedesktop.DBus.ListNames']);
-  if (err) return null;
-  const m = stdout.match(/org\.mozilla\.firefox\.[A-Za-z0-9_-]+/);
-  return m ? m[0] : null;
-}
-
-async function openViaDBus(service, url) {
-  // ay = array of bytes: gdbus wants [104,116,116,...] byte literals.
-  const bytes = `[${[...Buffer.from(url, 'utf8')].join(',')}]`;
-  const { err, stdout } = await gdbusRun(['call', '--session',
-    '--dest', service,
-    '--object-path', '/org/mozilla/firefox/Remote',
-    '--method', 'org.mozilla.firefox.OpenURL', bytes]);
-  return !err && stdout.trim() === '()';
-}
-
 // Firefox under KDE/Wayland: a fresh process defaults to X and dies with
 // "cannot open display" (the user profile even exports MOZ_ENABLE_WAYLAND=0).
 // start.sh solved this by ALWAYS forcing Wayland — same here (fallback path).
 process.env.MOZ_ENABLE_WAYLAND = '1';
 
-function tryOpen(cmd, url) {
+// Verified against this machine's wedged mid-update Firefox: the running
+// instance's DBus OpenURL returns () WITHOUT delivering, and --new-tab is
+// swallowed too — but --new-window ALWAYS creates a visible window (the
+// remote hands it to the running instance, which then maps it). So:
+//   board  → --new-window (guaranteed visible)
+//   phones → --new-tab    (lands in the just-focused board window)
+// and every open is VERIFIED via xdotool window titles — never trust exit
+// codes alone. DETACHED spawn (setsid): never kill a cold-starting browser
+// (the old execFile+timeout actively murdered Firefox mid-launch).
+import { spawn } from 'node:child_process';
+
+function verifyWindow(substr, timeout = 20000) {
+  const start = Date.now();
   return new Promise((resolve) => {
-    // --new-tab: the remote-command form Firefox/Chromium understand; other
-    // openers (xdg-open, $BROWSER entries) receive the bare URL.
-    const args = /firefox/.test(cmd) ? ['--new-tab', url] : [url];
-    execFile(cmd, args, { timeout: 10_000 }, (err, _stdout, stderr) => {
-      const noise = (stderr ?? '').split('\n')
-        .filter((l) => l && !/Gtk-Message|Gdk-Message|Fontconfig|libva|MESA|dri|VkLayer/i.test(l))
-        .slice(0, 2).join(' | ');
-      // Success = process exited 0 AND produced no real error output
-      // (xdg-open "succeeds" silently all the time — stderr is the tell).
-      const ok = !err && !noise;
-      console.log(`[open] ${ok ? 'ok  ' : 'fail'} ${cmd} ${args.join(' ')}${noise ? ` — ${noise}` : ''}`);
-      resolve(ok);
-    });
+    const tick = () => {
+      try {
+        const out = execFileSync('xdotool', ['search', '--name', substr], { encoding: 'utf8' });
+        if (out.trim()) return resolve(out.trim().split('\n')[0]);
+      } catch { /* xdotool missing / no X */ }
+      if (Date.now() - start > timeout) return resolve(null);
+      setTimeout(tick, 400);
+    };
+    tick();
   });
 }
 
-async function openTab(url, tag) {
-  // 1) DBus remote of the RUNNING Firefox (genuine delivery, exit-0 lies
-  //    impossible: the call returns () only when the remote accepted it).
-  const service = await firefoxDBusService();
-  if (service && await openViaDBus(service, url)) {
-    console.log(`[open] ${tag}: opened via firefox-dbus`);
+function focusWindow(winId) {
+  try {
+    execFileSync('xdotool', ['windowactivate', '--sync', winId], { timeout: 5000, stdio: 'ignore' });
+  } catch { /* best effort */ }
+}
+
+function launchDetached(cmd, args) {
+  // setsid + stdio ignore: the browser outlives this script no matter what.
+  const child = spawn('setsid', [cmd, ...args], { detached: true, stdio: 'ignore' });
+  child.unref();
+}
+
+async function openTab(cmd, url, tag, { newWindow = false, expect = null } = {}) {
+  const args = /firefox/.test(cmd)
+    ? [newWindow ? '--new-window' : '--new-tab', url]
+    : [url];
+  launchDetached(cmd, args);
+  const winId = expect ? await verifyWindow(expect) : null;
+  if (expect && winId) {
+    focusWindow(winId);
+    console.log(`[open] ok  ${tag}: ${url} (window verified)`);
     return true;
   }
-  // 2) Binary chain (fresh instance / other browsers / last-resort xdg-open).
-  for (const { cmd, label } of candidates) {
-    if (await tryOpen(cmd, url)) {
-      console.log(`[open] ${tag}: opened via ${label}`);
-      return true;
-    }
+  if (!expect) {
+    // No title to verify (e.g. phone tabs share the board window) — a
+    // successful detached spawn of a known-good binary is our best signal.
+    console.log(`[open] ok  ${tag}: ${url}`);
+    return true;
   }
-  console.error(`[open] ${tag}: NO opener worked — open manually: ${url}`);
+  console.error(`[open] FAIL ${tag}: no window titled "${expect}" appeared — open manually: ${url}`);
   return false;
 }
 
 (async () => {
-  console.log('[open] opening the board tab (game host) — keep it open!');
-  const okBoard = await openTab(boardUrl, 'board');
+  // Pick the best binary once (the running-install launcher beats PATH on
+  // this box; --new-window/--new-tab against it verified working).
+  const primary = candidates.find((c) => /firefox/.test(c.cmd))?.cmd ?? candidates[0]?.cmd;
+  if (!primary) { console.error('[open] no browser binary found'); process.exit(1); }
+
+  console.log(`[open] browser : ${primary}`);
+  console.log('[open] opening the BOARD window (game host) — keep it open!');
+  // Board: its own window, verified by the page title (Firefox titles it
+  // "Secret Hitler … — Mozilla Firefox"; the code lives in the URL, not the
+  // title, so verify on the site name and longer — cold loads take a while).
+  await openTab(primary, boardUrl, 'board', { newWindow: true, expect: 'Secret Hitler' });
   await new Promise((r) => setTimeout(r, 2500)); // let the host claim its peer id first
+
+  // Players: --new-tab into the freshly focused window (the wedged-remote
+  // workaround made --new-tab reliable once a fresh window exists; and even
+  // if a tab lands elsewhere it is still open in this Firefox).
   for (let i = 0; i < n; i++) {
-    await openTab(playerUrls[i], `player ${i + 1}/${n}`);
+    await openTab(primary, playerUrls[i], `player ${i + 1}/${n}`);
     await new Promise((r) => setTimeout(r, 400));
   }
   console.log('');
@@ -200,9 +202,8 @@ async function openTab(url, tag) {
   console.log(`  Real phones can join too: scan the board QR or open`);
   console.log(`  ${base}/play/?g=${code}`);
   console.log('  Keep the BOARD tab open — it is the game host.');
-  if (!okBoard) {
-    console.log('');
-    console.log('  NOTE: no tab opener succeeded on this system — open the board URL');
-    console.log('  printed above manually (copy/paste into your browser).');
+  if (!values['no-open']) {
+    console.log('  (If any tab seems missing, the URLs printed above are all');
+    console.log('   copy/paste-able — every tab lands in the same Firefox.)');
   }
 })();
