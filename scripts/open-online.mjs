@@ -111,9 +111,42 @@ candidates.push({ cmd: 'xdg-open', label: 'xdg-open' });
 
 // ------------------------------------------------------------- opener logic
 
+// PRIMARY opener: Firefox's DBus remote. A RUNNING Firefox owns the session
+// bus name org.mozilla.firefox.<base64url(profile path)> and exposes
+// org.mozilla.firefox.OpenURL(in ay url) at /org/mozilla/firefox/Remote.
+// (--new-tab against a mid-update install can exit 0 WITHOUT opening a tab;
+// the DBus call returns () on genuine delivery — user-verified.)
+function gdbusRun(args) {
+  return new Promise((resolve) => {
+    execFile('gdbus', args, { timeout: 10_000 }, (err, stdout, stderr) => {
+      resolve({ err, stdout: stdout ?? '', stderr: stderr ?? '' });
+    });
+  });
+}
+
+async function firefoxDBusService() {
+  const { err, stdout } = await gdbusRun(['call', '--session',
+    '--dest', 'org.freedesktop.DBus',
+    '--object-path', '/org/freedesktop/DBus',
+    '--method', 'org.freedesktop.DBus.ListNames']);
+  if (err) return null;
+  const m = stdout.match(/org\.mozilla\.firefox\.[A-Za-z0-9_-]+/);
+  return m ? m[0] : null;
+}
+
+async function openViaDBus(service, url) {
+  // ay = array of bytes: gdbus wants [104,116,116,...] byte literals.
+  const bytes = `[${[...Buffer.from(url, 'utf8')].join(',')}]`;
+  const { err, stdout } = await gdbusRun(['call', '--session',
+    '--dest', service,
+    '--object-path', '/org/mozilla/firefox/Remote',
+    '--method', 'org.mozilla.firefox.OpenURL', bytes]);
+  return !err && stdout.trim() === '()';
+}
+
 // Firefox under KDE/Wayland: a fresh process defaults to X and dies with
 // "cannot open display" (the user profile even exports MOZ_ENABLE_WAYLAND=0).
-// start.sh solved this by ALWAYS forcing Wayland — same here.
+// start.sh solved this by ALWAYS forcing Wayland — same here (fallback path).
 process.env.MOZ_ENABLE_WAYLAND = '1';
 
 function tryOpen(cmd, url) {
@@ -135,6 +168,14 @@ function tryOpen(cmd, url) {
 }
 
 async function openTab(url, tag) {
+  // 1) DBus remote of the RUNNING Firefox (genuine delivery, exit-0 lies
+  //    impossible: the call returns () only when the remote accepted it).
+  const service = await firefoxDBusService();
+  if (service && await openViaDBus(service, url)) {
+    console.log(`[open] ${tag}: opened via firefox-dbus`);
+    return true;
+  }
+  // 2) Binary chain (fresh instance / other browsers / last-resort xdg-open).
   for (const { cmd, label } of candidates) {
     if (await tryOpen(cmd, url)) {
       console.log(`[open] ${tag}: opened via ${label}`);
