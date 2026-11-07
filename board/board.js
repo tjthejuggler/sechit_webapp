@@ -621,7 +621,17 @@ function swapRevealSeats(state, fromId, toId) {
 
 function renderSeats(state) {
   const ring = $('#seating-ring');
+  // Nomination started (or any post-reveal phase): remove the drag-ring
+  // remnant first — its .lobby-seat nodes would duplicate the seats this
+  // function draws, and the ring node itself must go home to the lobby.
+  const lobbyRing = $('#lobby-ring');
+  if (lobbyRing.parentElement === ring) {
+    lobbyRing.querySelectorAll('.lobby-seat').forEach((el) => el.remove());
+    $('#lobby-ring-wrap').appendChild(lobbyRing);
+    lobbyRing.classList.remove('reveal-host');
+  }
   for (const old of ring.querySelectorAll('.seat')) old.remove();
+  clearRevealSelection();
 
   const players = state.players ?? [];
   const n = Math.max(players.length, 1);
